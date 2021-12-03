@@ -8,8 +8,8 @@ public class Solver202102 : ISolver
         AimCoords aimCoords = new();
         foreach (var command in lines.Select(ParseCommand))
         {
-            command.Invoke(depthCoords);
-            command.Invoke(aimCoords);
+            command(depthCoords);
+            command(aimCoords);
         }
         return (depthCoords.Multiply(), aimCoords.Multiply());
     }
