@@ -29,9 +29,8 @@ class InputHandler: IInputHandler {
     }
 
     public async Task<string[]> GetAsync() {
-        Task<string> inputTask = (Exists() ? ReadAsync() : DownloadAsync());
-        string input = await inputTask;
-        return input.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        return (await (Exists() ? ReadAsync() : DownloadAsync()))
+            .Split('\n').SkipLast(1).ToArray();
     }
 
     private bool Exists() {
