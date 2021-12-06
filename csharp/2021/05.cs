@@ -3,14 +3,8 @@ public class Solver202105 : ISolver
     public dynamic Solve(string[] lines)
     {
         var ventLines = lines.Select(ParseLine);
-        var horizontalOrVerticalLines = from line in ventLines
-                                        where line.IsHorizontal || line.IsVertical
-                                        select line;
-        var intersectionPoints = horizontalOrVerticalLines.Pairwise()
-                // .Where(pair => !pair.line1.Equals(pair.line2)))
-            .SelectMany(IntersectLines);
-        return intersectionPoints
-            .Distinct().Count();
+        return (CountDistinctIntersections(ventLines.Where(line => line.IsHorizontal || line.IsVertical)),
+            CountDistinctIntersections(ventLines));
     }
 
     private Line ParseLine(string s)
@@ -26,49 +20,60 @@ public class Solver202105 : ISolver
         return new Point(x, y);
     }
 
-    private IEnumerable<Point> IntersectLines((Line line1, Line line2) vents)
+    private int CountDistinctIntersections(IEnumerable<Line> lines)
     {
-        if (vents.line1.IsVertical && vents.line2.IsHorizontal)
+        return lines.Pairwise().SelectMany(IntersectLines).Distinct().Count();
+    }
+
+    private IEnumerable<Point> IntersectLines((Line, Line) vents)
+    {
+        var (line1, line2) = vents;
+        if (line1.IsVertical)
         {
-            var intersection = new Point(vents.line1.A.X, vents.line2.A.Y);
-            if (vents.line1.Includes(intersection) && vents.line2.Includes(intersection))
-            {
-                yield return intersection;
-            }
+            (line2, line1) = vents;
         }
-        else if (vents.line1.IsHorizontal && vents.line2.IsVertical)
+        var xPoints = new int[] { line1.A.X, line1.B.X, line2.A.X, line2.B.X };
+        Array.Sort(xPoints);
+        var yPoints = new int[] { line1.A.Y, line1.B.Y, line2.A.Y, line2.B.Y };
+        Array.Sort(yPoints);
+        if (line1.IsVertical)
         {
-            var intersection = new Point(vents.line2.A.X, vents.line1.A.Y);
-            if (vents.line1.Includes(intersection) && vents.line2.Includes(intersection))
+            if (line1.A.X == line2.A.X)
             {
-                yield return intersection;
-            }
-        }
-        else if (vents.line1.IsHorizontal && vents.line2.IsHorizontal
-            && vents.line1.A.Y == vents.line2.A.Y)
-        {
-            var points = new int[] { vents.line1.A.X, vents.line1.B.X, vents.line2.A.X, vents.line2.B.X };
-            Array.Sort(points);
-            if ((vents.line1.Includes(new Point(points[0], vents.line1.A.Y)) && vents.line2.Includes(new Point(points[1], vents.line1.A.Y)))
-                || (vents.line2.Includes(new Point(points[0], vents.line1.A.Y)) && vents.line1.Includes(new Point(points[1], vents.line1.A.Y))))
-            {
-                for (int x = points[1]; x <= points[2]; x++)
+                var x = line1.A.X;
+                if ((line1.Includes(new Point(x, yPoints[0])) && line2.Includes(new Point(x, yPoints[1])))
+                    || (line2.Includes(new Point(x, yPoints[0])) && line1.Includes(new Point(x, yPoints[1]))))
                 {
-                    yield return new Point(x, vents.line1.A.Y);
+                    for (int y = yPoints[1]; y <= yPoints[2]; y++)
+                    {
+                        yield return new Point(x, y);
+                    }
                 }
             }
         }
-        else if (vents.line1.IsVertical && vents.line2.IsVertical
-            && vents.line1.A.X == vents.line2.A.X)
+        else
         {
-            var points = new int[] { vents.line1.A.Y, vents.line1.B.Y, vents.line2.A.Y, vents.line2.B.Y };
-            Array.Sort(points);
-            if ((vents.line1.Includes(new Point(vents.line1.A.X, points[0])) && vents.line2.Includes(new Point(vents.line1.A.X, points[1])))
-                || (vents.line2.Includes(new Point(vents.line1.A.X, points[0])) && vents.line1.Includes(new Point(vents.line1.A.X, points[1]))))
+            if (!line2.IsVertical && line1.Slope == line2.Slope)
             {
-                for (int y = points[1]; y <= points[2]; y++)
+                if (line1.YIntercept == line2.YIntercept)
                 {
-                    yield return new Point(vents.line1.A.X, y);
+                    if ((line1.Includes(new Point(xPoints[0], line1.CalculateY(xPoints[0]))) && line2.Includes(new Point(xPoints[1], line2.CalculateY(xPoints[1]))))
+                        || (line2.Includes(new Point(xPoints[0], line2.CalculateY(xPoints[0]))) && line1.Includes(new Point(xPoints[1], line1.CalculateY(xPoints[1])))))
+                    {
+                        for (int x = xPoints[1]; x <= xPoints[2]; x++)
+                        {
+                            yield return new Point(x, line1.CalculateY(x));
+                        }
+                    }
+                }
+            }
+            else
+            {
+                var x = line2.IsVertical ? line2.A.X : (line2.YIntercept - line1.YIntercept) / (line1.Slope - line2.Slope);
+                var intersection = new Point(x, line1.CalculateY(x));
+                if (line1.Includes(intersection) && line2.Includes(intersection))
+                {
+                    yield return intersection;
                 }
             }
         }
@@ -124,9 +129,31 @@ struct Line
         }
     }
 
+    public int Slope
+    {
+        get
+        {
+            return (A.Y - B.Y) / (A.X - B.X);
+        }
+    }
+
+    public int YIntercept
+    {
+        get
+        {
+            return A.Y - Slope * A.X;
+        }
+    }
+
     public bool Includes(Point p)
     {
         return ((A.X <= p.X && p.X <= B.X) || (B.X <= p.X && p.X <= A.X))
-            && ((A.Y <= p.Y && p.Y <= B.Y) || (B.Y <= p.Y && p.Y <= A.Y));
+            && ((A.Y <= p.Y && p.Y <= B.Y) || (B.Y <= p.Y && p.Y <= A.Y))
+            && (IsVertical ? p.X == A.X : p.Y == CalculateY(p.X));
+    }
+
+    public int CalculateY(int x)
+    {
+        return Slope * x + YIntercept;
     }
 }
