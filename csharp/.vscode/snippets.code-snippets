@@ -1,0 +1,17 @@
+{
+	"Solver": {
+		"scope": "csharp",
+		"prefix": "aoc-solver",
+		"body": [
+			"public class Solver${TM_DIRECTORY/^.+[\\/\\\\]+(.*)$/$1/}$TM_FILENAME_BASE : ISolver",
+			"{",
+    		"\tpublic dynamic Solve(string[] lines)",
+    		"\t{",
+			"\t\t$0",
+        	"\t\treturn false;",
+    		"\t}",
+			"}"
+		],
+		"description": "New Solver for the day"
+	}
+}
