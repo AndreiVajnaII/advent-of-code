@@ -15,7 +15,8 @@ public interface IInputHandler {
 }
 
 class InputHandler: IInputHandler {
-    private readonly string path;
+    private readonly string inputPath;
+    private static readonly string examplePath = "example.txt";
     private readonly string url;
 
     private readonly HttpClient http;
@@ -24,26 +25,31 @@ class InputHandler: IInputHandler {
 
     public InputHandler(string year, string day, HttpClient http) {
         this.http = http;
-        path = Path.Combine(year, "inputs", $"{Helpers.PadDay(day)}.txt");
+        inputPath = Path.Combine(year, "inputs", $"{Helpers.PadDay(day)}.txt");
         url = $"https://adventofcode.com/{year}/day/{day}/input";
     }
 
     public async Task<string[]> GetAsync() {
-        return (await (Exists() ? ReadAsync() : DownloadAsync()))
-            .Split('\n').SkipLast(1).ToArray();
+        return (await (Exists(examplePath) ? ReadAsync(examplePath) : GetRealInputAsync()))
+            .ReplaceLineEndings().Split(Environment.NewLine).SkipLast(1).ToArray();
     }
 
-    private bool Exists() {
+    private Task<string> GetRealInputAsync()
+    {
+        return Exists(inputPath) ? ReadAsync(inputPath) : DownloadAsync();
+    }
+
+    private bool Exists(string path) {
         return File.Exists(path);
     }
 
-    private Task<string> ReadAsync() {
+    private Task<string> ReadAsync(string path) {
         return File.ReadAllTextAsync(path);
     }
 
     private async Task<string> DownloadAsync() {
         var content = await http.GetStringAsync(url);
-        File.WriteAllText(path, content);
+        File.WriteAllText(inputPath, content);
         return content;
     }
 
