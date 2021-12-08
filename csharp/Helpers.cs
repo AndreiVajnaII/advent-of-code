@@ -25,4 +25,10 @@ public static class IEnumerableExtensions {
         (first, var tail) = enumerable;
         (second, rest) = tail;
     }
+
+    public static (T, T) AsTuple2<T>(this IEnumerable<T> enumerable)
+    {
+        var (first, second, _) = enumerable;
+        return (first, second);
+    }
 }
