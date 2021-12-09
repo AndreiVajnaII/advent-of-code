@@ -80,23 +80,6 @@ public class Solver202105 : ISolver
     }
 }
 
-struct Point
-{
-    public int X { get; private set; }
-    public int Y { get; private set; }
-
-    public Point(int x, int y)
-    {
-        X = x;
-        Y = y;
-    }
-
-    public override string ToString()
-    {
-        return $"{X},{Y}";
-    }
-}
-
 struct Line
 {
     public Point A { get; private set; }

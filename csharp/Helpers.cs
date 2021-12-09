@@ -1,10 +1,17 @@
-public class Helpers {
-    public static string PadDay(string day) {
+public static class Helpers {
+    public static string PadDay(string day)
+    {
         return day.Length < 2 ? $"0{day}" : day;
     }
 
-    public static uint ParseBinary(string s) {
+    public static uint ParseBinary(string s)
+    {
         return Convert.ToUInt32(s, 2);
+    }
+
+    public static int ParseChar(char c)
+    {
+        return (int)(c - '0');
     }
 }
 
@@ -30,5 +37,79 @@ public static class IEnumerableExtensions {
     {
         var (first, second, _) = enumerable;
         return (first, second);
+    }
+
+    public static T[,] ToArray2D<T>(this IEnumerable<IEnumerable<T>> enumerable)
+    {
+        var array = enumerable.Select(e => e.ToArray()).ToArray();
+        T[,] array2D = new T[array.Length, array[0].Length];
+        for (int row = 0; row < array2D.GetLength(0); row++)
+        {
+            for (int col = 0; col < array2D.GetLength(1); col++)
+            {
+                array2D[row, col] = array[row][col];
+            }
+        }
+        return array2D;
+    }
+}
+
+public class Grid2D<T>
+{
+    private static (int X, int Y)[] neighbours = new [] {(1, 0), (0, 1), (-1, 0), (0, -1)};
+
+    private T[,] grid;
+
+    public Grid2D(T[,] grid)
+    {
+        this.grid = grid;
+    }
+
+    public T ValueAt(Point p)
+    {
+        return grid[p.X, p.Y];
+    }
+
+    public IEnumerable<Point> CoordEnumerable()
+    {
+        for (int x = 0; x < grid.GetLength(0); x++)
+        {
+            for (int y = 0; y < grid.GetLength(1); y++)
+            {
+                yield return new Point(x, y);
+            }
+        }
+    }
+
+    public IEnumerable<T> Adjacents(Point p)
+    {
+        return neighbours
+            .Select(d => new Point(p.X + d.X, p.Y + d.Y))
+            .Where(IsInBounds)
+            .Select(ValueAt);
+    }
+
+    private bool IsInBounds(Point p)
+    {
+        return grid.GetLowerBound(0) <= p.X && p.X <= grid.GetUpperBound(0)
+            && grid.GetLowerBound(1) <= p.Y && p.Y <= grid.GetUpperBound(1);
+    }
+
+}
+
+public struct Point
+{
+    public int X { get; private set; }
+    public int Y { get; private set; }
+
+    public Point(int x, int y)
+    {
+        X = x;
+        Y = y;
+    }
+
+    public override string ToString()
+    {
+        return $"{X},{Y}";
     }
 }
