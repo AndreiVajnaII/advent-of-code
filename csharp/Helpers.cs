@@ -67,18 +67,28 @@ public class Grid2D<T>
 
     public T ValueAt(Point p)
     {
-        return grid[p.X, p.Y];
+        return grid[p.Y, p.X];
     }
 
     public IEnumerable<Point> CoordEnumerable()
     {
-        for (int x = 0; x < grid.GetLength(0); x++)
+        for (int y = 0; y < grid.GetLength(0); y++)
         {
-            for (int y = 0; y < grid.GetLength(1); y++)
+            for (int x = 0; x < grid.GetLength(1); x++)
             {
                 yield return new Point(x, y);
             }
         }
+    }
+
+    public int getWidth()
+    {
+        return grid.GetLength(1);
+    }
+
+    public int getHeight()
+    {
+        return grid.GetLength(0);
     }
 
     public IEnumerable<T> Adjacents(Point p)
@@ -89,10 +99,10 @@ public class Grid2D<T>
             .Select(ValueAt);
     }
 
-    private bool IsInBounds(Point p)
+    public bool IsInBounds(Point p)
     {
-        return grid.GetLowerBound(0) <= p.X && p.X <= grid.GetUpperBound(0)
-            && grid.GetLowerBound(1) <= p.Y && p.Y <= grid.GetUpperBound(1);
+        return grid.GetLowerBound(0) <= p.Y && p.Y <= grid.GetUpperBound(0)
+            && grid.GetLowerBound(1) <= p.X && p.X <= grid.GetUpperBound(1);
     }
 
 }
