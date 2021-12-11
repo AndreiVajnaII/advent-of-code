@@ -6,11 +6,11 @@ public class Runner {
     public Runner(InputHandlerFactory inputHandler) {
         this.inputHandler = inputHandler;
     }
-    public async Task RunAsync(string year, string day) {
+    public async Task RunAsync(string year, string day, string? examplePath) {
         Console.WriteLine(
             GetSolver(year, day)?
                 .Solve(
-                    await inputHandler.For(year, day).GetAsync()
+                    await inputHandler.For(year, day, examplePath).GetAsync()
                 ));
     }
 
