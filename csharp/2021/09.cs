@@ -15,14 +15,14 @@ public class Solver202109 : ISolver
     private IEnumerable<int> LowestPoints(Grid2D<int> grid)
     {
         return from p in grid.CoordEnumerable()
-               where grid.Adjacents(p).All(adjValue => grid.ValueAt(p) < adjValue)
+               where grid.Adjacents(p, Grid2D.orthogonalNeighbours).All(adjValue => grid.ValueAt(p) < adjValue)
                select grid.ValueAt(p);
     }
 
     private List<int> Basins(Grid2D<int> grid)
     {
         var basins = new List<int>();
-        var basinMap = new int?[grid.getHeight(), grid.getWidth()];
+        var basinMap = new int?[grid.Height, grid.Width];
         foreach (var p in grid.CoordEnumerable().Where(p => grid.ValueAt(p) != 9))
         {
             var left = ValueOrNullAt(grid, basinMap, new Point(p.X - 1, p.Y));

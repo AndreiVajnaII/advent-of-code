@@ -1,4 +1,5 @@
-public static class Helpers {
+public static class Helpers
+{
     public static string PadDay(string day)
     {
         return day.Length < 2 ? $"0{day}" : day;
@@ -15,7 +16,8 @@ public static class Helpers {
     }
 }
 
-public static class IEnumerableExtensions {
+public static class IEnumerableExtensions
+{
     public static IEnumerable<(T, T)> Pairwise<T>(this IEnumerable<T> enumerable)
     {
         return enumerable.SelectMany((item1, i) => enumerable.Skip(i + 1).Select(item2 => (item1, item2)));
@@ -54,11 +56,40 @@ public static class IEnumerableExtensions {
     }
 }
 
+public class Grid2D
+{
+    public static readonly (int X, int Y)[] orthogonalNeighbours = new[] { (1, 0), (0, 1), (-1, 0), (0, -1) };
+    public static readonly (int X, int Y)[] diagonalNeighbours = new[] { (1, 1), (1, -1), (-1, 1), (-1, -1) };
+    public static readonly (int X, int Y)[] allNeighbours = orthogonalNeighbours.Union(diagonalNeighbours).ToArray();
+}
+
 public class Grid2D<T>
 {
-    private static (int X, int Y)[] neighbours = new [] {(1, 0), (0, 1), (-1, 0), (0, -1)};
-
     private T[,] grid;
+
+    public int Width
+    {
+        get
+        {
+            return grid.GetLength(1);
+        }
+    }
+
+    public int Height
+    {
+        get
+        {
+            return grid.GetLength(0);
+        }
+    }
+
+    public int Count
+    {
+        get
+        {
+            return Width * Height;
+        }
+    }
 
     public Grid2D(T[,] grid)
     {
@@ -68,6 +99,11 @@ public class Grid2D<T>
     public T ValueAt(Point p)
     {
         return grid[p.Y, p.X];
+    }
+
+    public void SetValueAt(Point p, T value)
+    {
+        grid[p.Y, p.X] = value;
     }
 
     public IEnumerable<Point> CoordEnumerable()
@@ -81,22 +117,16 @@ public class Grid2D<T>
         }
     }
 
-    public int getWidth()
+    public IEnumerable<T> Adjacents(Point p, (int X, int Y)[] neighbours)
     {
-        return grid.GetLength(1);
+        return AdjacentPoints(p, neighbours).Select(ValueAt);
     }
 
-    public int getHeight()
-    {
-        return grid.GetLength(0);
-    }
-
-    public IEnumerable<T> Adjacents(Point p)
+    public IEnumerable<Point> AdjacentPoints(Point p, (int X, int Y)[] neighbours)
     {
         return neighbours
             .Select(d => new Point(p.X + d.X, p.Y + d.Y))
-            .Where(IsInBounds)
-            .Select(ValueAt);
+            .Where(IsInBounds);
     }
 
     public bool IsInBounds(Point p)
