@@ -153,3 +153,98 @@ public struct Point
         return $"{X},{Y}";
     }
 }
+
+public class Graph<T> : Dictionary<T, ISet<T>> where T : notnull
+{
+    public void AddTwoWay(T start, T end)
+    {
+        AddOneWay(start, end);
+        AddOneWay(end, start);
+    }
+
+    public void AddOneWay(T start, T end)
+    {
+        if (!ContainsKey(start))
+        {
+            Add(start, new HashSet<T>());
+        }
+        this[start].Add(end);
+    }
+
+    public TVisitor Traverse<TVisitor>(T current, T end, TVisitor visitor) where TVisitor : GraphVisitor<T>
+    {
+        if (current.Equals(end))
+        {
+            visitor.End(end);
+        }
+        else
+        {
+            visitor.Visit(current);
+            foreach (var neighbour in this[current])
+            {
+                if (!visitor.HasVisited(neighbour))
+                {
+                    Traverse(neighbour, end, visitor);
+                }
+            }
+            visitor.Unvisit(current);
+        }
+        return visitor;
+    }
+}
+
+public class GraphVisitor<T>
+{
+    private IGraphVisitPolicy<T> visitPolicy;
+
+    public GraphVisitor() : this(new DefaultGraphVisitPolicy<T>()) { }
+
+    public GraphVisitor(IGraphVisitPolicy<T> visitPolicy)
+    {
+        this.visitPolicy = visitPolicy;
+    }
+
+    public virtual void Visit(T node)
+    {
+        visitPolicy.Visit(node);
+    }
+
+    public virtual void End(T node) { }
+
+    public virtual bool HasVisited(T node)
+    {
+        return visitPolicy.HasCompletelyVisited(node);
+    }
+
+    public virtual void Unvisit(T node)
+    {
+        visitPolicy.Unvisit(node);
+    }
+}
+
+public interface IGraphVisitPolicy<T>
+{
+    void Visit(T node);
+    void Unvisit(T node);
+    bool HasCompletelyVisited(T node);
+}
+
+public class DefaultGraphVisitPolicy<T> : IGraphVisitPolicy<T>
+{
+    private ISet<T> visited = new HashSet<T>();
+    public virtual bool HasCompletelyVisited(T node)
+    {
+        return visited.Contains(node);
+    }
+
+    public virtual void Visit(T node)
+    {
+        visited.Add(node);
+    }
+
+    public virtual void Unvisit(T node)
+    {
+        visited.Remove(node);
+    }
+
+}
