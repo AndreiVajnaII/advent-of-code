@@ -14,10 +14,40 @@ public static class Helpers
     {
         return (int)(c - '0');
     }
+
+    // group lines separated by blank lines
+    public static IEnumerable<IEnumerable<string>> GroupLines(string[] lines)
+    {
+        bool newGroup = true;
+        var group = new List<string>();
+        foreach (var line in lines)
+        {
+            if (line == "")
+            {
+                yield return group;
+                group = new List<string>();
+                newGroup = true;
+            }
+            else
+            {
+                group.Add(line);
+                if (newGroup)
+                {
+                    newGroup = false;
+                }
+            }
+        }
+        yield return group;
+    }
 }
 
 public static class IEnumerableExtensions
 {
+    public static IEnumerable<T> Flatten<T>(this IEnumerable<IEnumerable<T>> enumerable)
+    {
+        return enumerable.SelectMany(x => x);
+    }
+
     public static IEnumerable<(T, T)> Pairwise<T>(this IEnumerable<T> enumerable)
     {
         return enumerable.SelectMany((item1, i) => enumerable.Skip(i + 1).Select(item2 => (item1, item2)));
@@ -96,44 +126,48 @@ public class Grid2D<T>
         this.grid = grid;
     }
 
-    public T ValueAt(Point p)
+    public Grid2D(int width, int height, T initialValue)
     {
-        return grid[p.Y, p.X];
+        this.grid = new T[height, width];
+        foreach (var p in CoordEnumerable())
+        {
+            SetValueAt(p, initialValue);
+        }
     }
+
+    public T ValueAt(Point p) => grid[p.Y, p.X];
 
     public void SetValueAt(Point p, T value)
     {
         grid[p.Y, p.X] = value;
     }
 
-    public IEnumerable<Point> CoordEnumerable()
-    {
-        for (int y = 0; y < grid.GetLength(0); y++)
-        {
-            for (int x = 0; x < grid.GetLength(1); x++)
-            {
-                yield return new Point(x, y);
-            }
-        }
-    }
+    public IEnumerable<T> ValueEnumerable() => CoordEnumerable().Select(ValueAt);
+
+    public IEnumerable<Point> CoordEnumerable() => GridEnumerable().Flatten();
+
+    public IEnumerable<IEnumerable<T>> GridValueEnumerable()
+        => GridEnumerable().Select(line => line.Select(ValueAt));
+
+    public IEnumerable<IEnumerable<Point>> GridEnumerable()
+        => Enumerable.Range(0, Height).Select(LineEnumerable);
+
+    public IEnumerable<Point> LineEnumerable(int y)
+        => Enumerable.Range(0, Width).Select(x => new Point(x, y));
+
+    public override string ToString()
+        => String.Join(Environment.NewLine, GridValueEnumerable()
+            .Select(line => String.Join(' ', line)));
 
     public IEnumerable<T> Adjacents(Point p, (int X, int Y)[] neighbours)
-    {
-        return AdjacentPoints(p, neighbours).Select(ValueAt);
-    }
+        => AdjacentPoints(p, neighbours).Select(ValueAt);
 
     public IEnumerable<Point> AdjacentPoints(Point p, (int X, int Y)[] neighbours)
-    {
-        return neighbours
-            .Select(d => new Point(p.X + d.X, p.Y + d.Y))
-            .Where(IsInBounds);
-    }
+        => neighbours.Select(d => new Point(p.X + d.X, p.Y + d.Y)).Where(IsInBounds);
 
     public bool IsInBounds(Point p)
-    {
-        return grid.GetLowerBound(0) <= p.Y && p.Y <= grid.GetUpperBound(0)
-            && grid.GetLowerBound(1) <= p.X && p.X <= grid.GetUpperBound(1);
-    }
+        => grid.GetLowerBound(0) <= p.Y && p.Y <= grid.GetUpperBound(0)
+        && grid.GetLowerBound(1) <= p.X && p.X <= grid.GetUpperBound(1);
 
 }
 
@@ -146,6 +180,12 @@ public struct Point
     {
         X = x;
         Y = y;
+    }
+
+    public static Point Parse(string s)
+    {
+        var (x, y) = s.Split(',').Select(int.Parse).AsTuple2();
+        return new Point(x, y);
     }
 
     public override string ToString()
