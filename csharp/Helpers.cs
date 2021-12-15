@@ -113,6 +113,14 @@ public class Grid2D<T>
         }
     }
 
+    public Point BottomRight
+    {
+         get
+         {
+             return new Point(Width - 1, Height - 1);
+         }
+    }
+
     public int Count
     {
         get
@@ -126,9 +134,13 @@ public class Grid2D<T>
         this.grid = grid;
     }
 
-    public Grid2D(int width, int height, T initialValue)
+    public Grid2D(int width, int height)
     {
         this.grid = new T[height, width];
+    }
+
+    public Grid2D(int width, int height, T initialValue) : this(width, height)
+    {
         foreach (var p in CoordEnumerable())
         {
             SetValueAt(p, initialValue);
@@ -169,6 +181,15 @@ public class Grid2D<T>
         => grid.GetLowerBound(0) <= p.Y && p.Y <= grid.GetUpperBound(0)
         && grid.GetLowerBound(1) <= p.X && p.X <= grid.GetUpperBound(1);
 
+    public Grid2D<TNew> Spawn<TNew>()
+    {
+        return new Grid2D<TNew>(Width, Height);
+    }
+
+    public Grid2D<TNew> Spawn<TNew>(TNew initialValue)
+    {
+        return new Grid2D<TNew>(Width, Height, initialValue);
+    }
 }
 
 public struct Point
