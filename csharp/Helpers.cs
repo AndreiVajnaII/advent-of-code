@@ -41,6 +41,14 @@ public static class Helpers
     }
 }
 
+public static class NumberExtensions
+{
+    public static void TimesDo(this Int32 times, Action action)
+    {
+        for (int i = 0; i < times; i++) action();
+    }
+}
+
 public static class IEnumerableExtensions
 {
     public static IEnumerable<T> Flatten<T>(this IEnumerable<IEnumerable<T>> enumerable)
@@ -115,10 +123,10 @@ public class Grid2D<T>
 
     public Point BottomRight
     {
-         get
-         {
-             return new Point(Width - 1, Height - 1);
-         }
+        get
+        {
+            return new Point(Width - 1, Height - 1);
+        }
     }
 
     public int Count
@@ -308,4 +316,29 @@ public class DefaultGraphVisitPolicy<T> : IGraphVisitPolicy<T>
         visited.Remove(node);
     }
 
+}
+
+class DictionaryWithDefault<TKey, TValue> : Dictionary<TKey, TValue> where TKey : notnull
+{
+    private readonly TValue defaultValue;
+    public DictionaryWithDefault(TValue defaultValue)
+    {
+        this.defaultValue = defaultValue;
+    }
+
+    public new TValue this[TKey key]
+    {
+        get
+        {
+            if (!ContainsKey(key))
+            {
+                Add(key, defaultValue);
+            }
+            return base[key];
+        }
+        set
+        {
+            base[key] = value;
+        }
+    }
 }
