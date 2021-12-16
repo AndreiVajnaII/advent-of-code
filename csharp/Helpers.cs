@@ -10,6 +10,11 @@ public static class Helpers
         return Convert.ToUInt32(s, 2);
     }
 
+     public static ulong ParseBinaryLong(string s)
+    {
+        return Convert.ToUInt64(s, 2);
+    }
+
     public static int ParseChar(char c)
     {
         return (int)(c - '0');
@@ -46,6 +51,11 @@ public static class NumberExtensions
     public static void TimesDo(this Int32 times, Action action)
     {
         for (int i = 0; i < times; i++) action();
+    }
+
+    public static IEnumerable<TResult> Times<TResult>(this Int32 times, Func<TResult> f)
+    {
+        for (int i = 0; i < times; i++) yield return f();
     }
 }
 
