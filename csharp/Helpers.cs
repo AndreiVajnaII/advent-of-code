@@ -62,14 +62,15 @@ public static class NumberExtensions
 public static class IEnumerableExtensions
 {
     public static IEnumerable<T> Flatten<T>(this IEnumerable<IEnumerable<T>> enumerable)
-    {
-        return enumerable.SelectMany(x => x);
-    }
-
+        => enumerable.SelectMany(x => x);
     public static IEnumerable<(T, T)> Pairwise<T>(this IEnumerable<T> enumerable)
-    {
-        return enumerable.SelectMany((item1, i) => enumerable.Skip(i + 1).Select(item2 => (item1, item2)));
-    }
+        => enumerable.Pair((item, i) => enumerable.Skip(i + 1));
+    public static IEnumerable<(T, T)> Pair<T>(this IEnumerable<T> enumerable, Func<T, int, IEnumerable<T>> selector)
+        => enumerable.SelectMany((item1, i) => selector(item1, i).Select(item2 => (item1, item2)));
+    public static IEnumerable<(T, T)> Pair<T>(this IEnumerable<T> enumerable, Func<T, IEnumerable<T>> selector)
+        => enumerable.Pair((item, _) => selector(item));
+    public static IEnumerable<T> Without<T>(this IEnumerable<T> enumerable, T item)
+        => enumerable.Where(i => i is not null && !i.Equals(item));
 
     public static void Deconstruct<T>(this IEnumerable<T> enumerable, out T first, out IEnumerable<T> rest)
     {
