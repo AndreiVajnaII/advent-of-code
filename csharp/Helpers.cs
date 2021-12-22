@@ -10,7 +10,7 @@ public static class Helpers
         return Convert.ToUInt32(s, 2);
     }
 
-     public static ulong ParseBinaryLong(string s)
+    public static ulong ParseBinaryLong(string s)
     {
         return Convert.ToUInt64(s, 2);
     }
@@ -57,6 +57,16 @@ public static class NumberExtensions
     {
         for (int i = 0; i < times; i++) yield return f();
     }
+
+    public static T TimesIterate<T>(this Int32 times, Func<T, T> f, T initialValue)
+    {
+        T result = initialValue;
+        for (int i = 0; i < times; i++)
+        {
+            result = f(result);
+        }
+        return result;
+    }
 }
 
 public static class IEnumerableExtensions
@@ -71,6 +81,9 @@ public static class IEnumerableExtensions
         => enumerable.Pair((item, _) => selector(item));
     public static IEnumerable<T> Without<T>(this IEnumerable<T> enumerable, T item)
         => enumerable.Where(i => i is not null && !i.Equals(item));
+
+    public static string AsString(this IEnumerable<char> enumerable)
+        => String.Join("", enumerable);
 
     public static void Deconstruct<T>(this IEnumerable<T> enumerable, out T first, out IEnumerable<T> rest)
     {
@@ -194,7 +207,7 @@ public class Grid2D<T>
         => AdjacentPoints(p, neighbours).Select(ValueAt);
 
     public IEnumerable<Point> AdjacentPoints(Point p, (int X, int Y)[] neighbours)
-        => neighbours.Select(d => new Point(p.X + d.X, p.Y + d.Y)).Where(IsInBounds);
+        => p.SelectAdjacents(neighbours).Where(IsInBounds);
 
     public bool IsInBounds(Point p)
         => grid.GetLowerBound(0) <= p.Y && p.Y <= grid.GetUpperBound(0)
@@ -211,6 +224,53 @@ public class Grid2D<T>
     }
 }
 
+public class SparseGrid<T>
+{
+    public int Xmin { get; private set; }
+    public int Xmax { get; private set; }
+    public int Ymin { get; private set; }
+    public int Ymax { get; private set; }
+    public int Count { get => pixels.Count; }
+
+    private readonly IDictionary<Point, T?> pixels = new Dictionary<Point, T?>();
+    private readonly T? nullValue;
+
+    public SparseGrid(T? nullValue)
+    {
+        this.nullValue = nullValue;
+    }
+
+    public void Set(Point p, T? value)
+    {
+        pixels[p] = value;
+        if (p.X < Xmin) Xmin = p.X;
+        if (p.Y < Ymin) Ymin = p.Y;
+        if (p.X > Xmax) Xmax = p.X;
+        if (p.Y > Ymax) Ymax = p.Y;
+    }
+
+    public T? ValueAt(Point p)
+    {
+        return pixels.ContainsKey(p) ? pixels[p] : nullValue;
+    }
+
+    public bool IsInBounds(Point p)
+    {
+        return Xmin <= p.X && p.X <= Xmax
+            && Ymin <= p.Y && p.Y <= Ymax;
+    }
+}
+
+public class SparseGrid : SparseGrid<object>
+{
+    public SparseGrid() : base(null) { }
+
+    public void Set(Point p)
+    {
+        Set(p, null);
+    }
+}
+
 public struct Point
 {
     public int X { get; private set; }
@@ -220,6 +280,23 @@ public struct Point
     {
         X = x;
         Y = y;
+    }
+
+    public IEnumerable<Point> SelectAdjacents((int X, int Y)[] neighbours)
+    {
+        var p = this;
+        return neighbours.Select(d => new Point(p.X + d.X, p.Y + d.Y));
+    }
+
+    public static IEnumerable<Point> EnumeratePoints(int minX, int minY, int maxX, int maxY)
+    {
+        for (int y = minY; y <= maxY; y++)
+        {
+            for (int x = minX; x <= maxX; x++)
+            {
+                yield return new Point(x, y);
+            }
+        }
     }
 
     public static Point Parse(string s)
