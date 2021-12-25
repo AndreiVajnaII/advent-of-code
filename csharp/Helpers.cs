@@ -79,6 +79,12 @@ public static class IEnumerableExtensions
         => enumerable.SelectMany((item1, i) => selector(item1, i).Select(item2 => (item1, item2)));
     public static IEnumerable<(T, T)> Pair<T>(this IEnumerable<T> enumerable, Func<T, IEnumerable<T>> selector)
         => enumerable.Pair((item, _) => selector(item));
+
+    public static IEnumerable<IEnumerable<T>> Combine<T>(this IEnumerable<T> enumerable, IEnumerable<T> other)
+        => enumerable.SelectMany(first => other.Select(second => new T[] { first, second }));
+    public static IEnumerable<IEnumerable<T>> Combine<T>(this IEnumerable<IEnumerable<T>> enumerable, IEnumerable<T> other)
+        => enumerable.SelectMany(first => other.Select(second => first.Append(second)));
+
     public static IEnumerable<T> Without<T>(this IEnumerable<T> enumerable, T item)
         => enumerable.Where(i => i is not null && !i.Equals(item));
 
