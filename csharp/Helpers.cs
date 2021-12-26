@@ -84,12 +84,20 @@ public static class IEnumerableExtensions
         => enumerable.SelectMany(first => other.Select(second => new T[] { first, second }));
     public static IEnumerable<IEnumerable<T>> Combine<T>(this IEnumerable<IEnumerable<T>> enumerable, IEnumerable<T> other)
         => enumerable.SelectMany(first => other.Select(second => first.Append(second)));
+    public static IEnumerable<IEnumerable<T>> CombineAll<T>(this IEnumerable<IEnumerable<T>> enumerable)
+    {
+        var (first, second, rest) = enumerable;
+        return rest.Aggregate(first.Combine(second), (result, current) => result.Combine(current));
+    }
 
     public static IEnumerable<T> Without<T>(this IEnumerable<T> enumerable, T item)
         => enumerable.Where(i => i is not null && !i.Equals(item));
 
     public static string AsString(this IEnumerable<char> enumerable)
         => String.Join("", enumerable);
+
+    public static long Product(this IEnumerable<long> enumerable)
+        => enumerable.Aggregate((a, b) => a * b);
 
     public static void Deconstruct<T>(this IEnumerable<T> enumerable, out T first, out IEnumerable<T> rest)
     {
