@@ -80,6 +80,9 @@ public static class IEnumerableExtensions
     public static IEnumerable<(T, T)> Pair<T>(this IEnumerable<T> enumerable, Func<T, IEnumerable<T>> selector)
         => enumerable.Pair((item, _) => selector(item));
 
+    public static IEnumerable<(T1, T2)> Pair<T1, T2>(this IEnumerable<T1> e1, IEnumerable<T2> e2)
+        => e1.SelectMany(item1 => e2.Select(item2 => (item1, item2)));
+
     public static IEnumerable<IEnumerable<T>> Combine<T>(this IEnumerable<T> enumerable, IEnumerable<T> other)
         => enumerable.SelectMany(first => other.Select(second => new T[] { first, second }));
     public static IEnumerable<IEnumerable<T>> Combine<T>(this IEnumerable<IEnumerable<T>> enumerable, IEnumerable<T> other)
