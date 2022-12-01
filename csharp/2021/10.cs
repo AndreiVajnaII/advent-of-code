@@ -1,3 +1,7 @@
+using Aoc;
+
+namespace Aoc2021;
+
 public class Solver202110 : ISolver
 {
     private Dictionary<char, int> syntaxScores = new()

@@ -1,3 +1,7 @@
+using Aoc;
+
+namespace Aoc2021;
+
 public class Solver202115 : ISolver
 {
     public dynamic Solve(string[] lines)

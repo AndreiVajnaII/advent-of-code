@@ -1,3 +1,5 @@
+namespace Aoc;
+
 public static class Helpers
 {
     public static string PadDay(string day)

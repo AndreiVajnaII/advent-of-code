@@ -1,3 +1,5 @@
+namespace Aoc;
+
 public class InputHandlerFactory {
     private HttpClient http;
 

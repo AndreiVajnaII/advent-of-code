@@ -1,4 +1,7 @@
 using System.Text.RegularExpressions;
+using Aoc;
+
+namespace Aoc2021;
 
 public class Solver202117 : ISolver
 {

@@ -1,4 +1,7 @@
 using System.Text;
+using Aoc;
+
+namespace Aoc2021;
 
 public class Solver202103 : ISolver
 {

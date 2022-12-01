@@ -1,5 +1,7 @@
 using System.Reflection;
 
+namespace Aoc;
+
 public class Runner
 {
     private InputHandlerFactory inputHandler;
@@ -20,7 +22,7 @@ public class Runner
     private static ISolver GetSolver(string year, string day)
     {
         return new SolverWithMeasureMent((ISolver?)Assembly.GetExecutingAssembly()
-            .CreateInstance("Solver" + year + Helpers.PadDay(day))!);
+            .CreateInstance($"Aoc{year}.Solver{year}{Helpers.PadDay(day)}")!);
     }
 
 }

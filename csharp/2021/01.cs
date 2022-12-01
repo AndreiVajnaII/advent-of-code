@@ -1,3 +1,7 @@
+using Aoc;
+
+namespace Aoc2021;
+
 public class Solver202101: ISolver {
     public dynamic Solve(string[] lines) {
         var depths = lines.Select(s => Int64.Parse(s));

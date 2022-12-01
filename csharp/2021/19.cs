@@ -1,4 +1,7 @@
 using System.Collections.Immutable;
+using Aoc;
+
+namespace Aoc2021;
 
 public class Solver202119 : ISolver
 {
