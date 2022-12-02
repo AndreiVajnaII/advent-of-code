@@ -1,6 +1,6 @@
 ﻿using Aoc;
 
 HttpClient httpClient = new();
-httpClient.DefaultRequestHeaders.Add("cookie", args[0]);
+httpClient.DefaultRequestHeaders.Add("cookie", Environment.GetEnvironmentVariable("AOC_COOKIE"));
 await new Runner(new InputHandlerFactory(httpClient))
-    .RunAsync("2022", "2", args.Length > 1 ? args[1] : null);
+    .RunAsync("2022", "2", args.Length > 0 ? args[0] : null);
