@@ -6,24 +6,24 @@ public class Solver202202 : ISolver
 {
     public dynamic Solve(string[] lines)
     {
-        var rounds = lines.Select(line => line.Split(" ").AsTuple2());
+        var rounds = lines.Select(line => line.Split(" ").AsTuple2()).ToArray();
         return (
             Play(rounds, Evaluate1),
             Play(rounds, Evaluate2)
         );
     }
 
-    private int Play(IEnumerable<(string, string)> rounds, Func<(string, string), (Shape, Shape)> Evaluate)
+    private static int Play(IEnumerable<(string, string)> rounds, Func<(string, string), (Shape, Shape)> evaluate)
     {
-        return rounds.Select(Evaluate).Select(Score).Sum();
+        return rounds.Select(evaluate).Select(Score).Sum();
     }
 
-    private (Shape, Shape) Evaluate1((string their, string mine) round)
+    private static (Shape, Shape) Evaluate1((string their, string mine) round)
     {
         return (ToShape(round.their), ToShape(round.mine));
     }
 
-    private (Shape, Shape) Evaluate2((string their, string outcome) round)
+    private static (Shape, Shape) Evaluate2((string their, string outcome) round)
     {
         var theirShape = ToShape(round.their);
         var myShape = ComputeShape(theirShape, round.outcome);
@@ -31,7 +31,7 @@ public class Solver202202 : ISolver
         return (theirShape, myShape);
     }
 
-    private Shape ComputeShape(Shape theirShape, string outcome) => outcome switch
+    private static Shape ComputeShape(Shape theirShape, string outcome) => outcome switch
     {
         "X" => LoserOf(theirShape),
         "Y" => theirShape,
@@ -39,19 +39,19 @@ public class Solver202202 : ISolver
         _ => throw new ArgumentException("Invalid value " + outcome)
     };
 
-    private int Score((Shape their, Shape mine) round)
+    private static int Score((Shape their, Shape mine) round)
     {
-        return ((int)round.mine) + OuctomeScore(round);
+        return ((int)round.mine) + OutcomeScore(round);
     }
 
-    private int OuctomeScore((Shape their, Shape mine) round)
+    private static int OutcomeScore((Shape their, Shape mine) round)
     {
         if (round.their == round.mine) return 3;
         else if (round.their == LoserOf(round.mine)) return 6;
         else return 0;
     }
 
-    private Shape LoserOf(Shape winner) => winner switch
+    private static Shape LoserOf(Shape winner) => winner switch
     {
         Shape.Rock => Shape.Scissors,
         Shape.Paper => Shape.Rock,
@@ -59,7 +59,7 @@ public class Solver202202 : ISolver
         _ => throw new ArgumentException("Invalid shape " + winner)
     };
 
-    private Shape ToShape(string v) => v switch
+    private static Shape ToShape(string v) => v switch
     {
         "A" => Shape.Rock,
         "B" => Shape.Paper,

@@ -10,24 +10,24 @@ public class Solver202203 : ISolver
             lines.Select(MisplacedType).Select(PriorityOfType).Sum(),
             (from i in Enumerable.Range(0, lines.Length)
              group lines[i] by i / 3 into elfGroup
-             select PriorityOfType(BadgeOfElfGroup(elfGroup.ToList())))
+             select PriorityOfType(BadgeOfElfGroup(elfGroup)))
                 .Sum()
         );
     }
 
-    private char BadgeOfElfGroup(List<string> elves)
+    private static char BadgeOfElfGroup(IEnumerable<string> elves)
     {
         return elves.Select(Enumerable.AsEnumerable).Aggregate(Enumerable.Intersect).Single();
     }
 
-    private char MisplacedType(string rucksack)
+    private static char MisplacedType(string rucksack)
     {
         return rucksack.Take(rucksack.Length / 2).Intersect(rucksack.Skip(rucksack.Length / 2)).Single();
     }
 
-    private int PriorityOfType(char type)
+    private static int PriorityOfType(char type)
     {
-        if ('a' <= type && type <= 'z')
+        if (type is >= 'a' and <= 'z')
         {
             return type - 'a' + 1;
         }

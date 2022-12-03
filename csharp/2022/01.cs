@@ -7,7 +7,8 @@ public class Solver202201 : ISolver
 {
     public dynamic Solve(string[] lines)
     {
-        var elfCalories = GroupLines(lines).Select(elf => elf.Select(Int64.Parse).Sum());
+        var elfCalories = GroupLines(lines).Select(elf => elf.Select(long.Parse).Sum())
+            .ToArray();
 
         return (
             elfCalories.Max(),
