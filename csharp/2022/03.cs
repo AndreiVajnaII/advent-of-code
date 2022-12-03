@@ -8,10 +8,7 @@ public class Solver202203 : ISolver
     {
         return (
             lines.Select(MisplacedType).Select(PriorityOfType).Sum(),
-            (from i in Enumerable.Range(0, lines.Length)
-             group lines[i] by i / 3 into elfGroup
-             select PriorityOfType(BadgeOfElfGroup(elfGroup)))
-                .Sum()
+            lines.Chunk(3).Select(BadgeOfElfGroup).Select(PriorityOfType).Sum()
         );
     }
 
