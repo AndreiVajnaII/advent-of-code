@@ -122,6 +122,13 @@ public static class IEnumerableExtensions
         return (first, second);
     }
 
+    public static (T, T, T) AsTuple3<T>(this IEnumerable<T> enumerable)
+    {
+        var (first, second, rest) = enumerable;
+        var (third, _) = enumerable;
+        return (first, second, third);
+    }
+
     public static T[,] ToArray2D<T>(this IEnumerable<IEnumerable<T>> enumerable)
     {
         var array = enumerable.Select(e => e.ToArray()).ToArray();
