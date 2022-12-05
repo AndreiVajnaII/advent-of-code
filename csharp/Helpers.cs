@@ -1,3 +1,6 @@
+using System.Collections.Immutable;
+using System.Text.RegularExpressions;
+
 namespace Aoc;
 
 public static class Helpers
@@ -45,6 +48,17 @@ public static class Helpers
             }
         }
         yield return group;
+    }
+    
+    public static ImmutableArray<T> InitializeImmutableArray<T>(int size) where T : new()
+    {
+        var array = new T[size];
+        for (var i = 0; i < size; i++)
+        {
+            array[i] = new T();
+        }
+
+        return array.ToImmutableArray();
     }
 }
 
@@ -125,7 +139,7 @@ public static class IEnumerableExtensions
     public static (T, T, T) AsTuple3<T>(this IEnumerable<T> enumerable)
     {
         var (first, second, rest) = enumerable;
-        var (third, _) = enumerable;
+        var (third, _) = rest;
         return (first, second, third);
     }
 
@@ -142,6 +156,12 @@ public static class IEnumerableExtensions
         }
         return array2D;
     }
+}
+
+public static class RegexExtensions
+{
+    public static IEnumerable<string> GroupValues(this Match match) =>
+        match.Groups.Values.Skip(1).Select(group => group.Value);
 }
 
 public class Grid2D

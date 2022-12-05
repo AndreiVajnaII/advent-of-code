@@ -4,7 +4,7 @@ namespace Aoc;
 
 public class Runner
 {
-    private InputHandlerFactory inputHandler;
+    private readonly InputHandlerFactory inputHandler;
 
     public Runner(InputHandlerFactory inputHandler)
     {
@@ -12,16 +12,24 @@ public class Runner
     }
     public async Task RunAsync(string year, string day, string? examplePath)
     {
-        Console.WriteLine(
-            GetSolver(year, day)
-                .Solve(
-                    await inputHandler.For(year, day, examplePath).GetAsync()
-                ));
+        var result = GetSolver(year, day).Solve(
+                await inputHandler.For(year, day, examplePath).GetAsync());
+        Type resultType = result.GetType();
+        if (resultType.IsGenericType && resultType.GetGenericTypeDefinition() == typeof(ValueTuple<,>))
+        {
+            Console.WriteLine(result.Item1);
+            Console.WriteLine(result.Item2);
+        }
+        else
+        {
+            Console.WriteLine(result);
+        }
+        
     }
 
     private static ISolver GetSolver(string year, string day)
     {
-        return new SolverWithMeasureMent((ISolver?)Assembly.GetExecutingAssembly()
+        return new SolverWithMeasurement((ISolver?)Assembly.GetExecutingAssembly()
             .CreateInstance($"Aoc{year}.Solver{year}{Helpers.PadDay(day)}")!);
     }
 
@@ -32,10 +40,10 @@ public interface ISolver
     dynamic Solve(string[] lines);
 }
 
-class SolverWithMeasureMent : ISolver
+internal class SolverWithMeasurement : ISolver
 {
     private ISolver solver;
-    public SolverWithMeasureMent(ISolver solver)
+    public SolverWithMeasurement(ISolver solver)
     {
         this.solver = solver;
     }
