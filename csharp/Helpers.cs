@@ -452,7 +452,7 @@ public class DefaultGraphVisitPolicy<T> : IGraphVisitPolicy<T>
 
 }
 
-class DictionaryWithDefault<TKey, TValue> : Dictionary<TKey, TValue> where TKey : notnull
+public class DictionaryWithDefault<TKey, TValue> : Dictionary<TKey, TValue> where TKey : notnull
 {
     private readonly TValue defaultValue;
     public DictionaryWithDefault(TValue defaultValue)
@@ -473,6 +473,35 @@ class DictionaryWithDefault<TKey, TValue> : Dictionary<TKey, TValue> where TKey 
         set
         {
             base[key] = value;
+        }
+    }
+}
+
+public class Counter<T> where T : notnull
+{
+    private readonly DictionaryWithDefault<T, int> dictionary = new(0);
+
+    public Counter(IEnumerable<T> initial)
+    {
+        foreach (var value in initial)
+        {
+            Add(value);
+        }
+    }
+
+    public int Count => dictionary.Count;
+
+    public void Add(T value)
+    {
+        dictionary[value]++;
+    }
+
+    public void Remove(T value)
+    {
+        dictionary[value]--;
+        if (dictionary[value] == 0)
+        {
+            dictionary.Remove(value);
         }
     }
 }
