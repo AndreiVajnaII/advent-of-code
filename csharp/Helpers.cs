@@ -22,7 +22,7 @@ public static class Helpers
 
     public static int ParseChar(char c)
     {
-        return (int)(c - '0');
+        return (c - '0');
     }
 
     // group lines separated by blank lines
@@ -85,8 +85,21 @@ public static class NumberExtensions
     }
 }
 
-public static class IEnumerableExtensions
+public static class EnumerableExtensions
 {
+    public static IEnumerable<T> TakeWhileInclusive<T>(this IEnumerable<T> enumerable, Func<T, bool> predicate)
+    {
+        foreach (var item in enumerable)
+        {
+            if (!predicate(item))
+            {
+                yield return item;
+                break;
+            }
+
+            yield return item;
+        }
+    }
     public static IEnumerable<T> Flatten<T>(this IEnumerable<IEnumerable<T>> enumerable)
         => enumerable.SelectMany(x => x);
     public static IEnumerable<(T, T)> Pairwise<T>(this IEnumerable<T> enumerable)
@@ -113,7 +126,7 @@ public static class IEnumerableExtensions
         => enumerable.Where(i => i is not null && !i.Equals(item));
 
     public static string AsString(this IEnumerable<char> enumerable)
-        => String.Join("", enumerable);
+        => string.Join("", enumerable);
 
     public static long Product(this IEnumerable<long> enumerable)
         => enumerable.Aggregate((a, b) => a * b);
@@ -146,15 +159,21 @@ public static class IEnumerableExtensions
     public static T[,] ToArray2D<T>(this IEnumerable<IEnumerable<T>> enumerable)
     {
         var array = enumerable.Select(e => e.ToArray()).ToArray();
-        T[,] array2D = new T[array.Length, array[0].Length];
-        for (int row = 0; row < array2D.GetLength(0); row++)
+        var array2D = new T[array.Length, array[0].Length];
+        for (var row = 0; row < array2D.GetLength(0); row++)
         {
-            for (int col = 0; col < array2D.GetLength(1); col++)
+            for (var col = 0; col < array2D.GetLength(1); col++)
             {
                 array2D[row, col] = array[row][col];
             }
         }
         return array2D;
+    }
+
+    public static TResult[,] ToArray2D<TSource, TResult>(this IEnumerable<IEnumerable<TSource>> enumerable,
+        Func<TSource, TResult> selector)
+    {
+        return enumerable.Select(inner => inner.Select(selector)).ToArray2D();
     }
 }
 
@@ -173,39 +192,15 @@ public class Grid2D
 
 public class Grid2D<T>
 {
-    private T[,] grid;
+    private readonly T[,] grid;
 
-    public int Width
-    {
-        get
-        {
-            return grid.GetLength(1);
-        }
-    }
+    public int Width => grid.GetLength(1);
 
-    public int Height
-    {
-        get
-        {
-            return grid.GetLength(0);
-        }
-    }
+    public int Height => grid.GetLength(0);
 
-    public Point BottomRight
-    {
-        get
-        {
-            return new Point(Width - 1, Height - 1);
-        }
-    }
+    public Point BottomRight => new(Width - 1, Height - 1);
 
-    public int Count
-    {
-        get
-        {
-            return Width * Height;
-        }
-    }
+    public int Count => Width * Height;
 
     public Grid2D(T[,] grid)
     {
@@ -223,6 +218,12 @@ public class Grid2D<T>
         {
             SetValueAt(p, initialValue);
         }
+    }
+    
+    public T this[Point point]
+    {
+        get => ValueAt(point);
+        set => SetValueAt(point, value);
     }
 
     public T ValueAt(Point p) => grid[p.Y, p.X];
@@ -246,14 +247,24 @@ public class Grid2D<T>
         => Enumerable.Range(0, Width).Select(x => new Point(x, y));
 
     public override string ToString()
-        => String.Join(Environment.NewLine, GridValueEnumerable()
-            .Select(line => String.Join(' ', line)));
+        => string.Join(Environment.NewLine, GridValueEnumerable()
+            .Select(line => string.Join(' ', line)));
 
     public IEnumerable<T> Adjacents(Point p, (int X, int Y)[] neighbours)
         => AdjacentPoints(p, neighbours).Select(ValueAt);
 
     public IEnumerable<Point> AdjacentPoints(Point p, (int X, int Y)[] neighbours)
         => p.SelectAdjacents(neighbours).Where(IsInBounds);
+
+    public IEnumerable<Point> Enumerate(Point start, Func<Point, Point> navigator)
+    {
+        return IsInBounds(start)
+            ? Enumerate(navigator(start), navigator).Prepend(start)
+            : Enumerable.Empty<Point>();
+    }
+
+    public IEnumerable<T> EnumerateValues(Point start, Func<Point, Point> navigator) =>
+        Enumerate(start, navigator).Select(ValueAt);
 
     public bool IsInBounds(Point p)
         => grid.GetLowerBound(0) <= p.Y && p.Y <= grid.GetUpperBound(0)
@@ -276,7 +287,7 @@ public class SparseGrid<T>
     public int Xmax { get; private set; }
     public int Ymin { get; private set; }
     public int Ymax { get; private set; }
-    public int Count { get => pixels.Count; }
+    public int Count => pixels.Count;
 
     private readonly IDictionary<Point, T?> pixels = new Dictionary<Point, T?>();
     private readonly T? nullValue;
@@ -319,13 +330,18 @@ public class SparseGrid : SparseGrid<object>
 
 public struct Point
 {
-    public int X { get; private set; }
-    public int Y { get; private set; }
+    public int X { get; }
+    public int Y { get; }
 
     public Point(int x, int y)
     {
         X = x;
         Y = y;
+    }
+
+    public Point Delta(int dx, int dy)
+    {
+        return new Point(X + dx, Y + dy);
     }
 
     public IEnumerable<Point> SelectAdjacents((int X, int Y)[] neighbours)
