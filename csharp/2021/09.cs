@@ -19,7 +19,7 @@ public class Solver202109 : ISolver
     private IEnumerable<int> LowestPoints(Grid2D<int> grid)
     {
         return from p in grid.CoordEnumerable()
-               where grid.Adjacents(p, Grid2D.orthogonalNeighbours).All(adjValue => grid.ValueAt(p) < adjValue)
+               where grid.Adjacents(p, Grid2D.OrthogonalNeighbours).All(adjValue => grid.ValueAt(p) < adjValue)
                select grid.ValueAt(p);
     }
 

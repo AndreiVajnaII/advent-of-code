@@ -29,7 +29,7 @@ public class Solver202111 : ISolver
         while (toFlash.Count > 0)
         {
             var flashPoint = toFlash.Dequeue();
-            foreach (var adjacent in grid.AdjacentPoints(flashPoint, Grid2D.allNeighbours))
+            foreach (var adjacent in grid.AdjacentPoints(flashPoint, Grid2D.AllNeighbours))
             {
                 if (grid.ValueAt(adjacent) > 0)
                 {

@@ -185,9 +185,9 @@ public static class RegexExtensions
 
 public class Grid2D
 {
-    public static readonly (int X, int Y)[] orthogonalNeighbours = new[] { (1, 0), (0, 1), (-1, 0), (0, -1) };
-    public static readonly (int X, int Y)[] diagonalNeighbours = new[] { (1, 1), (1, -1), (-1, 1), (-1, -1) };
-    public static readonly (int X, int Y)[] allNeighbours = orthogonalNeighbours.Union(diagonalNeighbours).ToArray();
+    public static readonly (int X, int Y)[] OrthogonalNeighbours = new[] { (1, 0), (0, 1), (-1, 0), (0, -1) };
+    public static readonly (int X, int Y)[] DiagonalNeighbours = new[] { (1, 1), (1, -1), (-1, 1), (-1, -1) };
+    public static readonly (int X, int Y)[] AllNeighbours = OrthogonalNeighbours.Union(DiagonalNeighbours).ToArray();
 }
 
 public class Grid2D<T>

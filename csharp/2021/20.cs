@@ -17,7 +17,7 @@ public class Solver202120 : ISolver
         var newImage = new EnhancedImage();
         foreach (var p in Point.EnumeratePoints(image.Xmin - 1, image.Ymin - 1, image.Xmax + 1, image.Ymax + 1))
         {
-            string binary = String.Join("", p.SelectAdjacents(Grid2D.allNeighbours).Append(p)
+            string binary = String.Join("", p.SelectAdjacents(Grid2D.AllNeighbours).Append(p)
                                 .OrderBy(adj => adj.Y).ThenBy(adj => adj.X).Select(image.ExtendedValueAt));
             var newPixel = algorithm[(int)Helpers.ParseBinary(
                 binary)];

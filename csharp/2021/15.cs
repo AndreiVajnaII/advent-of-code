@@ -34,9 +34,9 @@ public class Solver202115 : ISolver
             foreach (var p in queue)
             {
                 totals.SetValueAt(p, grid.ValueAt(p) +
-                    totals.Adjacents(p, Grid2D.orthogonalNeighbours)
+                    totals.Adjacents(p, Grid2D.OrthogonalNeighbours)
                         .Where(v => v is not null).Min().GetValueOrDefault(0));
-                foreach (var neighbour in totals.AdjacentPoints(p, Grid2D.orthogonalNeighbours)
+                foreach (var neighbour in totals.AdjacentPoints(p, Grid2D.OrthogonalNeighbours)
                     .Where(adj => totals.ValueAt(adj) is null
                         || totals.ValueAt(adj) > totals.ValueAt(p) + grid.ValueAt(adj)))
                 {
