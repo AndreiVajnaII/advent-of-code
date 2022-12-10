@@ -100,6 +100,28 @@ public static class EnumerableExtensions
             yield return item;
         }
     }
+
+    public static IEnumerable<T> TakeEvery<T>(this IEnumerable<T> enumerable, int count, int? startWith = null)
+    {
+        if (startWith >= count)
+        {
+            throw new ArgumentException(nameof(startWith) + " has to be < " + nameof(count));
+        }
+
+        var i = startWith is null ? count : startWith + 1;
+        foreach (var item in enumerable)
+        {
+            if (--i == 0)
+            {
+                yield return item;
+                i = count;
+            }
+        }
+    }
+
+    public static IEnumerable<(T, int)> WithIndex<T>(this IEnumerable<T> enumerable)
+        => enumerable.Select((item, index) => (item, index));
+
     public static IEnumerable<T> Flatten<T>(this IEnumerable<IEnumerable<T>> enumerable)
         => enumerable.SelectMany(x => x);
     public static IEnumerable<(T, T)> Pairwise<T>(this IEnumerable<T> enumerable)
