@@ -26,9 +26,9 @@ public static class Helpers
     }
 
     // group lines separated by blank lines
-    public static IEnumerable<IEnumerable<string>> GroupLines(string[] lines)
+    public static IEnumerable<IEnumerable<string>> GroupLines(IEnumerable<string> lines)
     {
-        bool newGroup = true;
+        var newGroup = true;
         var group = new List<string>();
         foreach (var line in lines)
         {
@@ -64,20 +64,29 @@ public static class Helpers
 
 public static class NumberExtensions
 {
-    public static void TimesDo(this Int32 times, Action action)
+    /// <summary>
+    /// Perform an action the specified number of times
+    /// </summary>
+    public static void TimesDo(this int times, Action action)
     {
-        for (int i = 0; i < times; i++) action();
+        for (var i = 0; i < times; i++) action();
     }
 
-    public static IEnumerable<TResult> Times<TResult>(this Int32 times, Func<TResult> f)
+    /// <summary>
+    /// Call a function the specified number of times, returning the results as an IEnumerable
+    /// </summary>
+    public static IEnumerable<TResult> Times<TResult>(this int times, Func<TResult> f)
     {
-        for (int i = 0; i < times; i++) yield return f();
+        for (var i = 0; i < times; i++) yield return f();
     }
-
-    public static T TimesIterate<T>(this Int32 times, Func<T, T> f, T initialValue)
+    
+    /// <summary>
+    /// Call a function the specified number of times, each time passing the result of the previous invocation 
+    /// </summary>
+    public static T TimesIterate<T>(this int times, Func<T, T> f, T initialValue)
     {
-        T result = initialValue;
-        for (int i = 0; i < times; i++)
+        var result = initialValue;
+        for (var i = 0; i < times; i++)
         {
             result = f(result);
         }
@@ -150,6 +159,9 @@ public static class EnumerableExtensions
     public static string AsString(this IEnumerable<char> enumerable)
         => string.Join("", enumerable);
 
+    public static int Product(this IEnumerable<int> enumerable)
+        => enumerable.Aggregate((a, b) => a * b);
+    
     public static long Product(this IEnumerable<long> enumerable)
         => enumerable.Aggregate((a, b) => a * b);
 
