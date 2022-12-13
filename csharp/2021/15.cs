@@ -26,25 +26,10 @@ public class Solver202115 : ISolver
 
     private static int LowestRiskPath(Grid2D<int> grid)
     {
-        var totals = grid.Spawn<int?>();
-        var queue = new HashSet<Point>() { new Point(0, 0) };
-        while (queue.Count > 0)
-        {
-            var newQueue = new HashSet<Point>();
-            foreach (var p in queue)
-            {
-                totals.SetValueAt(p, grid.ValueAt(p) +
-                    totals.Adjacents(p, Grid2D.OrthogonalNeighbours)
-                        .Where(v => v is not null).Min().GetValueOrDefault(0));
-                foreach (var neighbour in totals.AdjacentPoints(p, Grid2D.OrthogonalNeighbours)
-                    .Where(adj => totals.ValueAt(adj) is null
-                        || totals.ValueAt(adj) > totals.ValueAt(p) + grid.ValueAt(adj)))
-                {
-                    newQueue.Add(neighbour);
-                }
-            }
-            queue = newQueue;
-        }
-        return totals.ValueAt(totals.BottomRight)!.Value - grid.ValueAt(new Point(0, 0));
+        return Graph.ShortestPath(
+            new Point(0, 0),
+            point => grid.AdjacentPoints(point, Grid2D.OrthogonalNeighbours),
+            (_, neighbour) => grid[neighbour]
+        )[grid.BottomRight];
     }
 }

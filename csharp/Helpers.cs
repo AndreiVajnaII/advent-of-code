@@ -224,7 +224,7 @@ public class Grid2D
     public static readonly (int X, int Y)[] AllNeighbours = OrthogonalNeighbours.Union(DiagonalNeighbours).ToArray();
 }
 
-public class Grid2D<T>
+public class Grid2D<T> where T : IEquatable<T>
 {
     private readonly T[,] grid;
 
@@ -253,7 +253,7 @@ public class Grid2D<T>
             SetValueAt(p, initialValue);
         }
     }
-    
+
     public T this[Point point]
     {
         get => ValueAt(point);
@@ -284,6 +284,8 @@ public class Grid2D<T>
         => string.Join(Environment.NewLine, GridValueEnumerable()
             .Select(line => string.Join(' ', line)));
 
+    public Point PositionOf(T value) => CoordEnumerable().First(point => ValueAt(point).Equals(value));
+    
     public IEnumerable<T> Adjacents(Point p, (int X, int Y)[] neighbours)
         => AdjacentPoints(p, neighbours).Select(ValueAt);
 
@@ -302,14 +304,14 @@ public class Grid2D<T>
 
     public bool IsInBounds(Point p)
         => grid.GetLowerBound(0) <= p.Y && p.Y <= grid.GetUpperBound(0)
-        && grid.GetLowerBound(1) <= p.X && p.X <= grid.GetUpperBound(1);
+                                        && grid.GetLowerBound(1) <= p.X && p.X <= grid.GetUpperBound(1);
 
-    public Grid2D<TNew> Spawn<TNew>()
+    public Grid2D<TNew> Spawn<TNew>() where TNew : IEquatable<TNew>
     {
         return new Grid2D<TNew>(Width, Height);
     }
 
-    public Grid2D<TNew> Spawn<TNew>(TNew initialValue)
+    public Grid2D<TNew> Spawn<TNew>(TNew initialValue) where TNew : IEquatable<TNew>
     {
         return new Grid2D<TNew>(Width, Height, initialValue);
     }
@@ -362,7 +364,7 @@ public class SparseGrid : SparseGrid<object>
     }
 }
 
-public struct Point
+public readonly struct Point : IEquatable<Point>
 {
     public int X { get; }
     public int Y { get; }
@@ -373,12 +375,37 @@ public struct Point
         Y = y;
     }
 
+    public bool Equals(Point other)
+    {
+        return X == other.X && Y == other.Y;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is Point other && Equals(other);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(X, Y);
+    }
+
+    public static bool operator ==(Point left, Point right)
+    {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(Point left, Point right)
+    {
+        return !left.Equals(right);
+    }
+
     public Point Delta(int dx, int dy)
     {
         return new Point(X + dx, Y + dy);
     }
 
-    public IEnumerable<Point> SelectAdjacents((int X, int Y)[] neighbours)
+    public IEnumerable<Point> SelectAdjacents(IEnumerable<(int X, int Y)> neighbours)
     {
         var p = this;
         return neighbours.Select(d => new Point(p.X + d.X, p.Y + d.Y));
@@ -386,9 +413,9 @@ public struct Point
 
     public static IEnumerable<Point> EnumeratePoints(int minX, int minY, int maxX, int maxY)
     {
-        for (int y = minY; y <= maxY; y++)
+        for (var y = minY; y <= maxY; y++)
         {
-            for (int x = minX; x <= maxX; x++)
+            for (var x = minX; x <= maxX; x++)
             {
                 yield return new Point(x, y);
             }
@@ -553,5 +580,44 @@ public class Counter<T> where T : notnull
         {
             dictionary.Remove(value);
         }
+    }
+}
+
+public static class Graph
+{
+    public static Dictionary<T, int> ShortestPath<T>(T startPoint,
+        Func<T, IEnumerable<T>> getNeighbours,
+        Func<T, T, int> getDistance,
+        Func<T, bool>? isTarget = null) where T : notnull
+    {
+        var distances = new Dictionary<T, int>
+        {
+            [startPoint] = 0
+        };
+        var queue = new Queue<T>();
+        queue.Enqueue(startPoint);
+        while (queue.Count > 0)
+        {
+            var newQueue = new Queue<T>();
+            foreach (var point in queue)
+            {
+                foreach (var neighbour in getNeighbours(point))
+                {
+                    var distance = distances[point] + getDistance(point, neighbour);
+                    if (!distances.ContainsKey(neighbour) || distance < distances[neighbour])
+                    {
+                        distances[neighbour] = distance;
+                        if (isTarget != null && isTarget(neighbour))
+                        {
+                            return distances;
+                        }
+                        newQueue.Enqueue(neighbour);
+                    }
+                }
+            }
+            queue = newQueue;
+        }
+
+        return distances;
     }
 }
