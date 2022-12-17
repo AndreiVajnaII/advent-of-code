@@ -494,7 +494,6 @@ public readonly struct Point : IEquatable<Point>
         return Navigate(point => point.Delta(dx, dy)).TakeWhileInclusive(point => point != other);
     }
 
-
     public static Point Parse(string s)
     {
         var (x, y) = s.Split(',').Select(int.Parse).AsTuple2();
@@ -504,6 +503,14 @@ public readonly struct Point : IEquatable<Point>
     public override string ToString()
     {
         return $"{X},{Y}";
+    }
+}
+
+public static class PointExtensions
+{
+    public static int ManhattanDistance(this Point a, Point b)
+    {
+        return Math.Abs(b.X - a.X) + Math.Abs(b.Y - a.Y);
     }
 }
 
@@ -692,5 +699,19 @@ public static class Graph
         }
 
         return distances;
+    }
+}
+
+public static class TupleHelpers
+{
+    public static bool IsOverlapping((long Start, long End) interval1, (long Start, long End) interval2)
+    {
+        return IsInInterval(interval1.Start, interval2)
+               || IsInInterval(interval2.Start, interval1);
+    }
+    
+    public static bool IsInInterval(long value, (long Start, long End) interval)
+    {
+        return value >= interval.Start && value <= interval.End;
     }
 }
