@@ -128,6 +128,20 @@ public static class EnumerableExtensions
         }
     }
 
+    // FirstOrDefault returns the default value for a struct, and you can easily make it nullable to return null.
+    // This method solves that.
+    public static T? FirstOrNull<T>(this IEnumerable<T> enumerable, Func<T, bool> predicate) where T : struct
+    {
+        foreach (var item in enumerable)
+        {
+            if (predicate(item))
+            {
+                return item;
+            }
+        }
+        return null;
+    }
+
     public static IEnumerable<(T, int)> WithIndex<T>(this IEnumerable<T> enumerable)
         => enumerable.Select((item, index) => (item, index));
 
@@ -142,6 +156,19 @@ public static class EnumerableExtensions
 
     public static IEnumerable<(T1, T2)> Pair<T1, T2>(this IEnumerable<T1> e1, IEnumerable<T2> e2)
         => e1.SelectMany(item1 => e2.Select(item2 => (item1, item2)));
+
+    // [1, 2, 3, 4] => [(1, 2), (2, 3), (3, 4)]
+    public static IEnumerable<(T, T)> ZipShift<T>(this IEnumerable<T> enumerable)
+    {
+        using var e = enumerable.GetEnumerator();
+        if (!e.MoveNext()) yield break;
+        var prev = e.Current;
+        while (e.MoveNext())
+        {
+            yield return (prev, e.Current);
+            prev = e.Current;
+        }
+    }
 
     public static IEnumerable<IEnumerable<T>> Combine<T>(this IEnumerable<T> enumerable, IEnumerable<T> other)
         => enumerable.SelectMany(first => other.Select(second => new T[] { first, second }));
@@ -217,6 +244,16 @@ public static class RegexExtensions
         match.Groups.Values.Skip(1).Select(group => group.Value);
 }
 
+public interface IPointGrid<T>
+{
+    T this[Point point] { get; set; }
+    
+    int Xmin { get; }
+    int Xmax { get; }
+    int Ymin { get; }
+    int Ymax { get; }
+}
+
 public class Grid2D
 {
     public static readonly (int X, int Y)[] OrthogonalNeighbours = new[] { (1, 0), (0, 1), (-1, 0), (0, -1) };
@@ -224,7 +261,7 @@ public class Grid2D
     public static readonly (int X, int Y)[] AllNeighbours = OrthogonalNeighbours.Union(DiagonalNeighbours).ToArray();
 }
 
-public class Grid2D<T> where T : IEquatable<T>
+public class Grid2D<T> : IPointGrid<T> where T : IEquatable<T>
 {
     private readonly T[,] grid;
 
@@ -235,6 +272,11 @@ public class Grid2D<T> where T : IEquatable<T>
     public Point BottomRight => new(Width - 1, Height - 1);
 
     public int Count => Width * Height;
+
+    public int Xmin => grid.GetLowerBound(1);
+    public int Xmax => grid.GetUpperBound(1);
+    public int Ymin => grid.GetLowerBound(0);
+    public int Ymax => grid.GetUpperBound(0);
 
     public Grid2D(T[,] grid)
     {
@@ -317,12 +359,12 @@ public class Grid2D<T> where T : IEquatable<T>
     }
 }
 
-public class SparseGrid<T>
+public class SparseGrid<T> : IPointGrid<T?>
 {
-    public int Xmin { get; private set; }
-    public int Xmax { get; private set; }
-    public int Ymin { get; private set; }
-    public int Ymax { get; private set; }
+    public int Xmin { get; set; }
+    public int Xmax { get; set; }
+    public int Ymin { get; set; }
+    public int Ymax { get; set; }
     public int Count => pixels.Count;
 
     private readonly IDictionary<Point, T?> pixels = new Dictionary<Point, T?>();
@@ -333,7 +375,7 @@ public class SparseGrid<T>
         this.nullValue = nullValue;
     }
 
-    public void Set(Point p, T? value)
+    protected void Set(Point p, T? value)
     {
         pixels[p] = value;
         if (p.X < Xmin) Xmin = p.X;
@@ -342,9 +384,15 @@ public class SparseGrid<T>
         if (p.Y > Ymax) Ymax = p.Y;
     }
 
-    public T? ValueAt(Point p)
+    protected T? ValueAt(Point p)
     {
         return pixels.ContainsKey(p) ? pixels[p] : nullValue;
+    }
+    
+    public T? this[Point point]
+    {
+        get => ValueAt(point);
+        set => Set(point, value);
     }
 
     public bool IsInBounds(Point p)
@@ -421,6 +469,31 @@ public readonly struct Point : IEquatable<Point>
             }
         }
     }
+
+    // moves a point using the specified navigator function until that function returns null
+    public IEnumerable<Point> Navigate(Func<Point, Point?> navigator)
+    {
+        Point? current = this;
+        while (current is not null)
+        {
+            yield return (Point) current;
+            current = navigator((Point) current);
+        }
+    }
+
+    // enumerates points between this point and the specified other point,
+    // either in a horizontal or vertical direction, depending on
+    // how the other point is situated relatively to this one
+    public IEnumerable<Point> NavigateTo(Point other)
+    {
+        if (other.X != X && other.Y != Y)
+        {
+            throw new ArgumentException("Direction must be either horizontal or vertical");
+        }
+        var (dx, dy) = (Math.Sign(other.X - X), Math.Sign(other.Y - Y));
+        return Navigate(point => point.Delta(dx, dy)).TakeWhileInclusive(point => point != other);
+    }
+
 
     public static Point Parse(string s)
     {
