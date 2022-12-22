@@ -611,10 +611,16 @@ public class DefaultGraphVisitPolicy<T> : IGraphVisitPolicy<T>
 
 public class DictionaryWithDefault<TKey, TValue> : Dictionary<TKey, TValue> where TKey : notnull
 {
-    private readonly TValue defaultValue;
+    private readonly Func<TValue> defaultInitializer;
+
     public DictionaryWithDefault(TValue defaultValue)
     {
-        this.defaultValue = defaultValue;
+        this.defaultInitializer = () => defaultValue;
+    }
+
+    public DictionaryWithDefault(Func<TValue> defaultInitializer)
+    {
+        this.defaultInitializer = defaultInitializer;
     }
 
     public new TValue this[TKey key]
@@ -623,7 +629,7 @@ public class DictionaryWithDefault<TKey, TValue> : Dictionary<TKey, TValue> wher
         {
             if (!ContainsKey(key))
             {
-                Add(key, defaultValue);
+                Add(key, defaultInitializer());
             }
             return base[key];
         }
