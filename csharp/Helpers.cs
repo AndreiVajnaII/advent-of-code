@@ -706,6 +706,22 @@ public static class Graph
 
         return distances;
     }
+    
+    public static IEnumerable<TState> Traverse<TState>(TState initialState,
+        Func<TState, IEnumerable<TState>> getNewStates)
+    {
+        var states = new Queue<TState>();
+        states.Enqueue(initialState);
+        while (states.Count > 0)
+        {
+            var state = states.Dequeue();
+            yield return state;
+            foreach (var newState in getNewStates(state))
+            {
+                states.Enqueue(newState);
+            }
+        }
+    }
 }
 
 public static class TupleHelpers
