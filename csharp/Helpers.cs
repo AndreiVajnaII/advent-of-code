@@ -344,6 +344,9 @@ public class Grid2D<T> : IPointGrid<T> where T : IEquatable<T>
     public IEnumerable<T> EnumerateValues(Point start, Func<Point, Point> navigator) =>
         Enumerate(start, navigator).Select(ValueAt);
 
+    public IEnumerable<T> EnumerateValues(IEnumerable<Point> points) =>
+        points.Where(IsInBounds).Select(ValueAt);
+
     public bool IsInBounds(Point p)
         => grid.GetLowerBound(0) <= p.Y && p.Y <= grid.GetUpperBound(0)
                                         && grid.GetLowerBound(1) <= p.X && p.X <= grid.GetUpperBound(1);
