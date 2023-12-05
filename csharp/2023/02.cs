@@ -7,7 +7,7 @@ namespace Aoc2023;
 public class Solver202302 : ISolver
 {
     private static readonly Regex gameRegex = new(@"Game (\d+): (.+)");
-    private static readonly string[] colours = new[] { "red", "green", "blue" };
+    private static readonly string[] colours = ["red", "green", "blue"];
 
     public dynamic Solve(string[] lines)
     {
@@ -61,17 +61,12 @@ public class Solver202302 : ISolver
 internal class Game
 {
     public int Id { get; set; }
-    public Turn[] Turns { get; set; } = Array.Empty<Turn>();
+    public Turn[] Turns { get; set; } = [];
 }
 
-internal class Turn
+internal class Turn(IImmutableDictionary<string, int> counts)
 {
-    private readonly IImmutableDictionary<string, int> _counts;
-
-    public Turn(IImmutableDictionary<string, int> counts)
-    {
-        _counts = counts;
-    }
+    private readonly IImmutableDictionary<string, int> _counts = counts;
 
     public int GetCount(string colour) => _counts.GetValueOrDefault(colour);
 }
