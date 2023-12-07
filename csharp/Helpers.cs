@@ -645,7 +645,7 @@ public class DictionaryWithDefault<TKey, TValue> : Dictionary<TKey, TValue> wher
 
 public class Counter<T> where T : notnull
 {
-    private readonly DictionaryWithDefault<T, int> dictionary = new(0);
+    public readonly DictionaryWithDefault<T, int> Counts = new(0);
 
     public Counter(IEnumerable<T> initial)
     {
@@ -655,19 +655,19 @@ public class Counter<T> where T : notnull
         }
     }
 
-    public int Count => dictionary.Count;
+    public int Count => Counts.Count;
 
     public void Add(T value)
     {
-        dictionary[value]++;
+        Counts[value]++;
     }
 
     public void Remove(T value)
     {
-        dictionary[value]--;
-        if (dictionary[value] == 0)
+        Counts[value]--;
+        if (Counts[value] == 0)
         {
-            dictionary.Remove(value);
+            Counts.Remove(value);
         }
     }
 }
