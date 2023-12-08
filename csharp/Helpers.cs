@@ -22,7 +22,21 @@ public static class Helpers
 
     public static int ParseChar(char c)
     {
-        return (c - '0');
+        return c - '0';
+    }
+
+    public static long GreatestCommonDivisor(long a, long b)
+    {
+        while (b != 0)
+        {
+            (a, b) = (b, a % b);
+        }
+        return a;
+    }
+
+    public static long LeastCommonMultiple(long a, long b)
+    {
+        return a * b / GreatestCommonDivisor(a, b);
     }
 
     // group lines separated by blank lines
@@ -49,7 +63,7 @@ public static class Helpers
         }
         yield return group;
     }
-    
+
     public static ImmutableArray<T> InitializeImmutableArray<T>(int size) where T : new()
     {
         var array = new T[size];
@@ -79,7 +93,7 @@ public static class NumberExtensions
     {
         for (var i = 0; i < times; i++) yield return f();
     }
-    
+
     /// <summary>
     /// Call a function the specified number of times, each time passing the result of the previous invocation 
     /// </summary>
@@ -188,7 +202,7 @@ public static class EnumerableExtensions
 
     public static int Product(this IEnumerable<int> enumerable)
         => enumerable.Aggregate((a, b) => a * b);
-    
+
     public static long Product(this IEnumerable<long> enumerable)
         => enumerable.Aggregate((a, b) => a * b);
 
@@ -208,6 +222,13 @@ public static class EnumerableExtensions
     {
         var (first, second, _) = enumerable;
         return (first, second);
+    }
+
+    public static (TLeft, TRight) AsTuple2<T, TLeft, TRight>(this IEnumerable<T> enumerable,
+        Func<T, TLeft> leftSelector, Func<T, TRight> rightSelector)
+    {
+        var (first, second, _) = enumerable;
+        return (leftSelector(first), rightSelector(second));
     }
 
     public static (T, T, T) AsTuple3<T>(this IEnumerable<T> enumerable)
@@ -247,7 +268,7 @@ public static class RegexExtensions
 public interface IPointGrid<T>
 {
     T this[Point point] { get; set; }
-    
+
     int Xmin { get; }
     int Xmax { get; }
     int Ymin { get; }
@@ -327,7 +348,7 @@ public class Grid2D<T> : IPointGrid<T> where T : IEquatable<T>
             .Select(line => string.Join(' ', line)));
 
     public Point PositionOf(T value) => CoordEnumerable().First(point => ValueAt(point).Equals(value));
-    
+
     public IEnumerable<T> Adjacents(Point p, (int X, int Y)[] neighbours)
         => AdjacentPoints(p, neighbours).Select(ValueAt);
 
@@ -391,7 +412,7 @@ public class SparseGrid<T> : IPointGrid<T?>
     {
         return pixels.ContainsKey(p) ? pixels[p] : nullValue;
     }
-    
+
     public T? this[Point point]
     {
         get => ValueAt(point);
@@ -479,8 +500,8 @@ public readonly struct Point : IEquatable<Point>
         Point? current = this;
         while (current is not null)
         {
-            yield return (Point) current;
-            current = navigator((Point) current);
+            yield return (Point)current;
+            current = navigator((Point)current);
         }
     }
 
@@ -643,6 +664,27 @@ public class DictionaryWithDefault<TKey, TValue> : Dictionary<TKey, TValue> wher
     }
 }
 
+public class CircularEnumerator<T>(IEnumerable<T> enumerable)
+{
+    private IEnumerator<T> _enumerator = enumerable.GetEnumerator();
+
+    public T Next()
+    {
+        if (_enumerator.MoveNext())
+        {
+            return _enumerator.Current;
+        }
+        _enumerator.Reset();
+        _enumerator.MoveNext();
+        return _enumerator.Current;
+    }
+
+    internal void Reset()
+    {
+        _enumerator.Reset();
+    }
+}
+
 public class Counter<T> where T : notnull
 {
     public readonly DictionaryWithDefault<T, int> Counts = new(0);
@@ -709,7 +751,7 @@ public static class Graph
 
         return distances;
     }
-    
+
     public static IEnumerable<TState> Traverse<TState>(TState initialState,
         Func<TState, IEnumerable<TState>> getNewStates)
     {
@@ -725,6 +767,14 @@ public static class Graph
             }
         }
     }
+
+    public static IEnumerable<T> Walk<T>(T start, Func<T, bool> hasReachedEnd, Func<T, T> next)
+    {
+        for (var node = start; !hasReachedEnd(node); node = next(node))
+        {
+            yield return node;
+        }
+    }
 }
 
 public static class TupleHelpers
@@ -734,7 +784,7 @@ public static class TupleHelpers
         return IsInInterval(interval1.Start, interval2)
                || IsInInterval(interval2.Start, interval1);
     }
-    
+
     public static bool IsInInterval(long value, (long Start, long End) interval)
     {
         return value >= interval.Start && value <= interval.End;
