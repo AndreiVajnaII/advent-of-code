@@ -2,14 +2,8 @@ using System.Reflection;
 
 namespace Aoc;
 
-public class Runner
+public class Runner(InputHandlerFactory inputHandler)
 {
-    private readonly InputHandlerFactory inputHandler;
-
-    public Runner(InputHandlerFactory inputHandler)
-    {
-        this.inputHandler = inputHandler;
-    }
     public async Task RunAsync(string year, string day, string? examplePath)
     {
         var result = GetSolver(year, day).Solve(
@@ -27,7 +21,7 @@ public class Runner
         
     }
 
-    private static ISolver GetSolver(string year, string day)
+    private static SolverWithMeasurement GetSolver(string year, string day)
     {
         return new SolverWithMeasurement((ISolver?)Assembly.GetExecutingAssembly()
             .CreateInstance($"Aoc{year}.Solver{year}{Helpers.PadDay(day)}")!);
@@ -40,13 +34,8 @@ public interface ISolver
     dynamic Solve(string[] lines);
 }
 
-internal class SolverWithMeasurement : ISolver
+internal class SolverWithMeasurement(ISolver solver) : ISolver
 {
-    private ISolver solver;
-    public SolverWithMeasurement(ISolver solver)
-    {
-        this.solver = solver;
-    }
     public dynamic Solve(string[] lines)
     {
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();

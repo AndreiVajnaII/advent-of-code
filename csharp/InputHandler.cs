@@ -1,12 +1,7 @@
 namespace Aoc;
 
-public class InputHandlerFactory {
-    private HttpClient http;
-
-    public InputHandlerFactory(HttpClient http) {
-        this.http = http;
-    }
-
+public class InputHandlerFactory(HttpClient http)
+{
     public IInputHandler For(string year, string day, string? examplePath) {
         return new InputHandler(year, day, examplePath, http);
     }
@@ -16,21 +11,9 @@ public interface IInputHandler {
     Task<string[]> GetAsync();
 }
 
-class InputHandler: IInputHandler {
-    private readonly string inputPath;
-    private readonly string? examplePath;
-    private readonly string url;
-
-    private readonly HttpClient http;
-
-    
-
-    public InputHandler(string year, string day, string? examplePath, HttpClient http) {
-        this.http = http;
-        this.examplePath = examplePath;
-        inputPath = Path.Combine(year, "inputs", $"{Helpers.PadDay(day)}.txt");
-        url = $"https://adventofcode.com/{year}/day/{day}/input";
-    }
+class InputHandler(string year, string day, string? examplePath, HttpClient http) : IInputHandler {
+    private readonly string inputPath = Path.Combine(year, "inputs", $"{Helpers.PadDay(day)}.txt");
+    private readonly string url = $"https://adventofcode.com/{year}/day/{day}/input";
 
     public async Task<string[]> GetAsync() {
         return (await (examplePath is not null ? ReadAsync(examplePath) : GetRealInputAsync()))
