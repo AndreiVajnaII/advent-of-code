@@ -1,3 +1,5 @@
+global using Direction = (int dX, int dY);
+
 using System.Collections.Immutable;
 using System.Text.RegularExpressions;
 
@@ -105,6 +107,13 @@ public static class NumberExtensions
             result = f(result);
         }
         return result;
+    }
+
+    public static IEnumerable<int> EnumerateTo(this int start, int end, bool inclusive = false)
+    {
+        var direction = Math.Sign(end - start);
+        var result = Graph.Walk(start, current => current == end, current => current + direction);
+        return inclusive ? result.Append(end) : result;
     }
 }
 
@@ -277,9 +286,18 @@ public interface IPointGrid<T>
 
 public class Grid2D
 {
-    public static readonly (int X, int Y)[] OrthogonalNeighbours = new[] { (1, 0), (0, 1), (-1, 0), (0, -1) };
-    public static readonly (int X, int Y)[] DiagonalNeighbours = new[] { (1, 1), (1, -1), (-1, 1), (-1, -1) };
-    public static readonly (int X, int Y)[] AllNeighbours = OrthogonalNeighbours.Union(DiagonalNeighbours).ToArray();
+    public static readonly Direction North = (0, -1);
+    public static readonly Direction South = (0, 1);
+    public static readonly Direction East = (1, 0);
+    public static readonly Direction West = (-1, 0);
+    public static readonly Direction NorthEast = (1, -1);
+    public static readonly Direction NorthWest = (-1, -1);
+    public static readonly Direction SouthEast = (1, 1);
+    public static readonly Direction SouthWest = (-1, 1);
+
+    public static readonly Direction[] OrthogonalNeighbours = [North, South, East, West];
+    public static readonly Direction[] DiagonalNeighbours = [NorthEast, NorthWest, SouthEast, SouthWest];
+    public static readonly Direction[] AllNeighbours = OrthogonalNeighbours.Union(DiagonalNeighbours).ToArray();
 }
 
 public class Grid2D<T> : IPointGrid<T> where T : IEquatable<T>
@@ -330,18 +348,29 @@ public class Grid2D<T> : IPointGrid<T> where T : IEquatable<T>
         grid[p.Y, p.X] = value;
     }
 
-    public IEnumerable<T> ValueEnumerable() => CoordEnumerable().Select(ValueAt);
+    public IEnumerable<T> ValueEnumerable()
+        => CoordEnumerable().Select(ValueAt);
 
-    public IEnumerable<Point> CoordEnumerable() => GridEnumerable().Flatten();
+    public IEnumerable<Point> CoordEnumerable()
+        => CoordEnumerable(new Point(Xmin, Ymin), new Point(Xmax, Ymax));
+
+    public IEnumerable<Point> CoordEnumerable(Point start, Point end)
+        => GridEnumerable(start, end).Flatten();
 
     public IEnumerable<IEnumerable<T>> GridValueEnumerable()
         => GridEnumerable().Select(line => line.Select(ValueAt));
 
     public IEnumerable<IEnumerable<Point>> GridEnumerable()
-        => Enumerable.Range(0, Height).Select(LineEnumerable);
+        => GridEnumerable(new Point(Xmin, Ymin), new Point(Xmax, Ymax));
+
+    public IEnumerable<IEnumerable<Point>> GridEnumerable(Point start, Point end)
+        => start.Y.EnumerateTo(end.Y, true).Select(y => LineEnumerable(y, start.X, end.X));
 
     public IEnumerable<Point> LineEnumerable(int y)
-        => Enumerable.Range(0, Width).Select(x => new Point(x, y));
+        => LineEnumerable(y, Xmin, Width);
+
+    public IEnumerable<Point> LineEnumerable(int y, int startX, int endX)
+        => startX.EnumerateTo(endX, true).Select(x => new Point(x, y));
 
     public override string ToString()
         => string.Join(Environment.NewLine, GridValueEnumerable()
@@ -370,7 +399,7 @@ public class Grid2D<T> : IPointGrid<T> where T : IEquatable<T>
 
     public bool IsInBounds(Point p)
         => grid.GetLowerBound(0) <= p.Y && p.Y <= grid.GetUpperBound(0)
-                                        && grid.GetLowerBound(1) <= p.X && p.X <= grid.GetUpperBound(1);
+            && grid.GetLowerBound(1) <= p.X && p.X <= grid.GetUpperBound(1);
 
     public Grid2D<TNew> Spawn<TNew>() where TNew : IEquatable<TNew>
     {
@@ -436,16 +465,10 @@ public class SparseGrid : SparseGrid<object>
     }
 }
 
-public readonly struct Point : IEquatable<Point>
+public readonly struct Point(int x, int y) : IEquatable<Point>
 {
-    public int X { get; }
-    public int Y { get; }
-
-    public Point(int x, int y)
-    {
-        X = x;
-        Y = y;
-    }
+    public int X { get; } = x;
+    public int Y { get; } = y;
 
     public bool Equals(Point other)
     {
@@ -472,10 +495,17 @@ public readonly struct Point : IEquatable<Point>
         return !left.Equals(right);
     }
 
+    /// <summary>
+    /// Adds dx and dy to the point
+    /// </summary>
     public Point Delta(int dx, int dy)
-    {
-        return new Point(X + dx, Y + dy);
-    }
+        => new(X + dx, Y + dy);
+
+    /// <summary>
+    /// Moves the point in the specified direction, which is represented as a tuple
+    /// </summary>
+    public Point Move(Direction direction)
+        => Delta(direction.dX, direction.dY);
 
     public IEnumerable<Point> SelectAdjacents(IEnumerable<(int X, int Y)> neighbours)
     {
