@@ -115,6 +115,12 @@ public static class NumberExtensions
         var result = Graph.Walk(start, current => current == end, current => current + direction);
         return inclusive ? result.Append(end) : result;
     }
+
+    public static bool IsBetween(this int x, int first, int second, bool inclusive = false)
+        => inclusive
+            ? (first <= x && x <= second) || (second <= x && x <= first)
+            : (first < x && x < second) || (second < x && x < first);
+
 }
 
 public static class EnumerableExtensions
@@ -165,8 +171,11 @@ public static class EnumerableExtensions
         return null;
     }
 
-    public static IEnumerable<(T, int)> WithIndex<T>(this IEnumerable<T> enumerable)
+    public static IEnumerable<(T Item, int Index)> WithIndex<T>(this IEnumerable<T> enumerable)
         => enumerable.Select((item, index) => (item, index));
+
+    public static IEnumerable<int> IndexesOf<T>(this IEnumerable<T> enumerable, Func<T, bool> predicate)
+        => enumerable.WithIndex().Where(pair => predicate(pair.Item)).Select(pair => pair.Index);
 
     public static IEnumerable<T> Flatten<T>(this IEnumerable<IEnumerable<T>> enumerable)
         => enumerable.SelectMany(x => x);
@@ -365,6 +374,12 @@ public class Grid2D<T> : IPointGrid<T> where T : IEquatable<T>
 
     public IEnumerable<IEnumerable<Point>> GridEnumerable(Point start, Point end)
         => start.Y.EnumerateTo(end.Y, true).Select(y => LineEnumerable(y, start.X, end.X));
+
+    public IEnumerable<IEnumerable<T>> ColumnValueEnumerable()
+        => ColumnEnumerable().Select(col => col.Select(ValueAt));
+
+    public IEnumerable<IEnumerable<Point>> ColumnEnumerable()
+        => Enumerable.Range(0, Width).Select(x => Enumerable.Range(0, Height).Select(y => new Point(x, y)));
 
     public IEnumerable<Point> LineEnumerable(int y)
         => LineEnumerable(y, Xmin, Width);
