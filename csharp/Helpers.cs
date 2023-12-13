@@ -125,6 +125,13 @@ public static class NumberExtensions
 
 public static class EnumerableExtensions
 {
+    public static IEnumerable<T> Do<T>(this IEnumerable<T> enumerable, Action<T> action)
+        => enumerable.Select(item =>
+        {
+            action(item);
+            return item;
+        });
+
     public static IEnumerable<T> TakeWhileInclusive<T>(this IEnumerable<T> enumerable, Func<T, bool> predicate)
     {
         foreach (var item in enumerable)
