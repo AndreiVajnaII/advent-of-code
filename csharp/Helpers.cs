@@ -395,8 +395,11 @@ public class Grid2D<T> : IPointGrid<T> where T : IEquatable<T>
         => startX.EnumerateTo(endX, true).Select(x => new Point(x, y));
 
     public override string ToString()
+        => ToString(" ");
+
+    public string ToString(string separator)
         => string.Join(Environment.NewLine, GridValueEnumerable()
-            .Select(line => string.Join(' ', line)));
+            .Select(line => string.Join(separator, line)));
 
     public Point PositionOf(T value) => CoordEnumerable().First(point => ValueAt(point).Equals(value));
 
