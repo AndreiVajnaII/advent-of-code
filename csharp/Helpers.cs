@@ -300,7 +300,7 @@ public interface IPointGrid<T>
     int Ymax { get; }
 }
 
-public class Grid2D
+public static class Grid2D
 {
     public static readonly Direction North = (0, -1);
     public static readonly Direction South = (0, 1);
