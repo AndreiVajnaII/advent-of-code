@@ -1,2 +1,2 @@
  - Whenever you have a recursion that takes too long, try to cache the results before optimizing.
- 
+ - When you have to iterate and keep the previous, probably a zip-shift and an aggregate will work better than trying just an aggregate with a seed, because with a seed you have to take care of the special case of the first item which has no prev.

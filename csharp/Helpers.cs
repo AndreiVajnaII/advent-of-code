@@ -17,6 +17,11 @@ public static class Helpers
         return Convert.ToUInt32(s, 2);
     }
 
+    public static int ParseHex(string s)
+    {
+        return Convert.ToInt32(s, 16);
+    }
+
     public static ulong ParseBinaryLong(string s)
     {
         return Convert.ToUInt64(s, 2);
@@ -446,7 +451,7 @@ public class Grid2D<T> : IPointGrid<T> where T : IEquatable<T>
     }
 }
 
-public class SparseGrid<T> : IPointGrid<T?>
+public class SparseGrid<T>(T? nullValue) : IPointGrid<T?>
 {
     public int Xmin { get; set; }
     public int Xmax { get; set; }
@@ -454,13 +459,10 @@ public class SparseGrid<T> : IPointGrid<T?>
     public int Ymax { get; set; }
     public int Count => pixels.Count;
 
-    private readonly IDictionary<Point, T?> pixels = new Dictionary<Point, T?>();
-    private readonly T? nullValue;
+    public Point TopLeft => new(Xmin, Ymin);
+    public Point BottomRight => new(Xmax, Ymax);
 
-    public SparseGrid(T? nullValue)
-    {
-        this.nullValue = nullValue;
-    }
+    private readonly Dictionary<Point, T?> pixels = [];
 
     protected void Set(Point p, T? value)
     {
@@ -472,9 +474,7 @@ public class SparseGrid<T> : IPointGrid<T?>
     }
 
     protected T? ValueAt(Point p)
-    {
-        return pixels.ContainsKey(p) ? pixels[p] : nullValue;
-    }
+        => pixels.TryGetValue(p, out T? value) ? value : nullValue;
 
     public T? this[Point point]
     {
@@ -824,16 +824,18 @@ public static class Graph
     }
 
     public static IEnumerable<TState> Traverse<TState>(TState initialState,
-        Func<TState, IEnumerable<TState>> getNewStates)
+        Func<TState, IEnumerable<TState>> getNewStates, bool useUniqueStates = false)
     {
         var states = new Queue<TState>();
         states.Enqueue(initialState);
+        var visited = new HashSet<TState> { initialState };
         while (states.Count > 0)
         {
             var state = states.Dequeue();
             yield return state;
-            foreach (var newState in getNewStates(state))
+            foreach (var newState in getNewStates(state).Where(newState => !visited.Contains(newState)))
             {
+                visited.Add(newState);
                 states.Enqueue(newState);
             }
         }
