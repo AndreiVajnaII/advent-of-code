@@ -279,9 +279,14 @@ public static class EnumerableExtensions
 
     public static TResult[,] ToArray2D<TSource, TResult>(this IEnumerable<IEnumerable<TSource>> enumerable,
         Func<TSource, TResult> selector)
-    {
-        return enumerable.Select(inner => inner.Select(selector)).ToArray2D();
-    }
+        => enumerable.Select(inner => inner.Select(selector)).ToArray2D();
+
+    public static Grid2D<T> ToGrid<T>(this IEnumerable<IEnumerable<T>> enumerable) where T : IEquatable<T>
+        => new(enumerable.ToArray2D());
+
+    public static Grid2D<TGrid> ToGrid<TSource, TGrid>(this IEnumerable<IEnumerable<TSource>> enumerable,
+        Func<TSource, TGrid> selector) where TGrid : IEquatable<TGrid>
+        => new(enumerable.ToArray2D(selector));
 }
 
 public static class RegexExtensions
@@ -314,6 +319,8 @@ public static class Grid2D
     public static readonly Direction[] OrthogonalNeighbours = [North, South, East, West];
     public static readonly Direction[] DiagonalNeighbours = [NorthEast, NorthWest, SouthEast, SouthWest];
     public static readonly Direction[] AllNeighbours = OrthogonalNeighbours.Union(DiagonalNeighbours).ToArray();
+
+    public static Direction OppositeDirection(Direction direction) => (-direction.dX, -direction.dY);
 }
 
 public class Grid2D<T> : IPointGrid<T> where T : IEquatable<T>
@@ -324,7 +331,9 @@ public class Grid2D<T> : IPointGrid<T> where T : IEquatable<T>
 
     public int Height => grid.GetLength(0);
 
-    public Point BottomRight => new(Width - 1, Height - 1);
+    public Point TopLeft => new(Xmin, Ymin);
+
+    public Point BottomRight => new(Xmax, Ymax);
 
     public int Count => Width * Height;
 
@@ -531,6 +540,13 @@ public readonly struct Point(int x, int y) : IEquatable<Point>
     /// </summary>
     public Point Move(Direction direction)
         => Delta(direction.dX, direction.dY);
+
+    /// <summary>
+    /// Checks whether the point is between the two specified points, including them
+    /// </summary>
+    public bool IsInBounds(Point lowerBound, Point upperBound)
+        => lowerBound.X <= X & X <= upperBound.X
+            && lowerBound.Y <= Y && Y <= upperBound.Y;
 
     public IEnumerable<Point> SelectAdjacents(IEnumerable<(int X, int Y)> neighbours)
     {
