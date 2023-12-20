@@ -32,6 +32,8 @@ public static class Helpers
         return c - '0';
     }
 
+    public static T Id<T>(T x) => x;
+
     public static long GreatestCommonDivisor(long a, long b)
     {
         while (b != 0)
