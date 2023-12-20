@@ -29,17 +29,9 @@ public class Solver202316 : ISolver
             .Count;
     }
 
-    private static Func<Beam, IEnumerable<Beam>> MoveBeam(Grid2D<char> grid)
-    {
-        var visited = new HashSet<Beam>();
-        return beam =>
-        {
-            visited.Add(beam);
-            return MoveBeam(beam, grid[beam.Position])
-                .Where(newBeam => grid.IsInBounds(newBeam.Position))
-                .Where(newBeam => !visited.Contains(newBeam));
-        };
-    }
+    private static Func<Beam, IEnumerable<Beam>> MoveBeam(Grid2D<char> grid) => beam
+        => MoveBeam(beam, grid[beam.Position])
+            .Where(newBeam => grid.IsInBounds(newBeam.Position));
 
     private static IEnumerable<Beam> MoveBeam(Beam beam, char tile) => tile switch
     {
