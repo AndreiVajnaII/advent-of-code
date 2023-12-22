@@ -41,7 +41,7 @@ public class Solver202320 : ISolver
 
         var buttonPushes = 1.EnumerateTo(int.MaxValue)
             .Do(_ => PushButton(modules))
-            .First(_ => (modules["gh"] as Conjunction).inputs["tv"] == false);
+            .First(_ => (modules["gh"] as Conjunction)?.inputs["tv"] == false);
 
         // for part 2, uptate the modules so that they detect cycles in their state
 
