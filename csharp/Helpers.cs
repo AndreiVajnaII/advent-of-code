@@ -81,7 +81,7 @@ public static class Helpers
             array[i] = new T();
         }
 
-        return array.ToImmutableArray();
+        return [.. array];
     }
 }
 
@@ -475,6 +475,8 @@ public class SparseGrid<T>(T? nullValue) : IPointGrid<T?>
         if (p.Y > Ymax) Ymax = p.Y;
     }
 
+    public bool IsSet(Point p) => pixels.ContainsKey(p);
+
     protected T? ValueAt(Point p)
         => pixels.TryGetValue(p, out T? value) ? value : nullValue;
 
@@ -495,10 +497,7 @@ public class SparseGrid : SparseGrid<object>
 {
     public SparseGrid() : base(null) { }
 
-    public void Set(Point p)
-    {
-        Set(p, null);
-    }
+    public void Set(Point p) => Set(p, null);
 }
 
 public readonly struct Point(int x, int y) : IEquatable<Point>
