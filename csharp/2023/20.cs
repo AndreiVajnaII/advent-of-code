@@ -31,33 +31,32 @@ public class Solver202320 : ISolver
         }
 
         (var lowPulses, var highPulses) = 1000.Times(() => PushButton(modules))
+            .Select(signals => signals.Aggregate((Low: 0, High: 0),
+                (result, signal) => signal.Pulse == false
+                    ? (result.Low + 1, result.High)
+                    : (result.Low, result.High + 1)))
             .Aggregate((result, tuple) =>
-                (result.LowPulses + tuple.LowPulses, result.HighPulses + tuple.HighPulses));
+                (result.Low + tuple.Low, result.High + tuple.High));
 
-        foreach (var module in modules.Values)
-        {
-            module.Reset();
-        }
+        var outputFeeder = modules.Single(entry => entry.Value is Conjunction c && c.Outputs.Contains("rx"));
+        var buttonPushes = (outputFeeder.Value as Conjunction)!.Inputs.Keys
+            .Select(inputName => FindFirstActivation(outputFeeder.Key, inputName, modules)).ToArray();
 
-        var buttonPushes = 1.EnumerateTo(int.MaxValue)
-            .Do(_ => PushButton(modules))
-            .First(_ => (modules["gh"] as Conjunction)?.inputs["tv"] == false);
-
-        // for part 2, uptate the modules so that they detect cycles in their state
-
-        return (lowPulses * highPulses, buttonPushes);
+        return (
+            lowPulses * highPulses,
+            buttonPushes.Aggregate(LeastCommonMultiple)
+        );
     }
 
-    private static (long LowPulses, long HighPulses) PushButton(Dictionary<string, CommModule> modules)
+    private static IEnumerable<(bool Pulse, string Destination, string Source)> PushButton(Dictionary<string, CommModule> modules)
     {
-        long lowPulses = 0;
-        long highPulses = 0;
         var queue = new Queue<(bool Pulse, string Desination, string Source)>();
         queue.Enqueue((false, "broadcaster", "button"));
         while (queue.Count > 0)
         {
-            (var pulse, var destination, var source) = queue.Dequeue();
-            if (pulse == false) lowPulses++; else highPulses++;
+            var signal = queue.Dequeue();
+            yield return signal;
+            (var pulse, var destination, var source) = signal;
             if (modules.TryGetValue(destination, out var module))
             {
                 foreach (var (newPulse, newDestination) in module.Send(pulse, source))
@@ -65,18 +64,26 @@ public class Solver202320 : ISolver
                     queue.Enqueue((newPulse, newDestination, destination));
                 }
             }
-            else 
-            {
-                if (pulse == false) {
-                    modules.Add(destination, new Output());
-                }
-            }
         }
-        return (lowPulses, highPulses);
+    }
+
+    private static long FindFirstActivation(string destination, string input, Dictionary<string, CommModule> modules)
+    {
+        ResetModules(modules);
+        return 1.EnumerateTo(int.MaxValue)
+            .First(_ => PushButton(modules).Contains((true, destination, input)));
     }
 
     private static (string Name, string[] Outputs) ParseLine(string line)
         => line.Split(" -> ").AsTuple2(Id, outputs => outputs.Split(", "));
+
+    private static void ResetModules(Dictionary<string, CommModule> modules)
+    {
+        foreach (var module in modules.Values)
+        {
+            module.Reset();
+        }
+    }
 }
 
 internal abstract class CommModule
@@ -105,29 +112,29 @@ internal class FlipFlop(string[] outputs) : CommModule
         }
         return Enumerable.Empty<(bool, string)>();
     }
+
+    public override void Reset()
+    {
+        state = false;
+    }
 }
 
 internal class Conjunction(string[] outputs, string[] inputs) : CommModule
 {
-    public readonly Dictionary<string, bool> inputs = inputs.Select(input => (input, false)).ToDictionary();
+    public string[] Outputs { get; private set; } = outputs;
+    public readonly Dictionary<string, bool> Inputs = inputs.Select(input => (input, false)).ToDictionary();
 
     public override IEnumerable<(bool Pulse, string Destination)> Send(bool pulse, string source)
     {
-        inputs[source] = pulse;
-        return outputs.Select(desination => (!inputs.Values.All(value => value == true), desination));
+        Inputs[source] = pulse;
+        return Outputs.Select(destination => (!Inputs.Values.All(value => value == true), destination));
     }
 
     public override void Reset()
     {
-        foreach (var key in inputs.Keys)
+        foreach (var key in Inputs.Keys)
         {
-            inputs[key] = false;
+            Inputs[key] = false;
         }
     }
-}
-
-internal class Output : CommModule
-{
-    public override IEnumerable<(bool Pulse, string Destination)> Send(bool pulse, string source)
-        => Enumerable.Empty<(bool, string)>();
 }
