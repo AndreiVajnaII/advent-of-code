@@ -193,6 +193,8 @@ public static class EnumerableExtensions
 
     public static IEnumerable<T> Flatten<T>(this IEnumerable<IEnumerable<T>> enumerable)
         => enumerable.SelectMany(x => x);
+
+    // [1, 2, 3, 4] => [(1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4)]
     public static IEnumerable<(T, T)> Pairwise<T>(this IEnumerable<T> enumerable)
         => enumerable.Pair((item, i) => enumerable.Skip(i + 1));
     public static IEnumerable<(T, T)> Pair<T>(this IEnumerable<T> enumerable, Func<T, int, IEnumerable<T>> selector)
